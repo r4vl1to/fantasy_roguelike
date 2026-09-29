@@ -3,11 +3,15 @@ extends RefCounted
 
 
 signal chunk_generated(chunk: ChunkData)
+signal chunk_generation_discarded(coord: Vector2i)
 
 var _generator: GaeaGenerator
 var _mapping: GaeaMappingRegistry
 var _importer: GaeaChunkImporter
 var _chunk_size: int
+var _required_chunks: Dictionary = {}
+var _required_chunks_configured: bool = false
+var _generation_tasks: Array[GaeaTask] = []
 
 
 func _init(
@@ -25,7 +29,12 @@ func _init(
 	)
 
 
-func generate_chunk(chunk_coord: Vector2i) -> void:
+func set_required_chunks(coords: Dictionary) -> void:
+	_required_chunks_configured = true
+	_required_chunks = coords.duplicate()
+
+
+func generate_chunk(chunk_coord: Vector2i) -> GaeaTask:
 	var world_rect := ChunkMath.chunk_to_world_rect(
 		chunk_coord,
 		_chunk_size
@@ -46,7 +55,11 @@ func generate_chunk(chunk_coord: Vector2i) -> void:
 
 	print("[WorldGenerator] Generate ", chunk_coord, " | area: ", area)
 
-	_generator.generate_area(area)
+	var task: GaeaTask = _generator.generate_area(area)
+	if task != null:
+		task.set_meta("chunk_coord", chunk_coord)
+		_generation_tasks.append(task)
+	return task
 
 
 func _on_generation_finished(grid: GaeaGrid) -> void:
@@ -61,6 +74,10 @@ func _on_generation_finished(grid: GaeaGrid) -> void:
 		)
 		return
 
+	if _required_chunks_configured and not _required_chunks.has(chunk_coord):
+		print("[WorldGenerator] Discard obsolete result ", chunk_coord)
+		chunk_generation_discarded.emit(chunk_coord)
+		return
 	print("[WorldGenerator] Finished ", chunk_coord)
 	var chunk := _importer.import_grid(
 		grid,

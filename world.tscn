@@ -2,7 +2,6 @@
 
 [ext_resource type="PackedScene" uid="uid://c5ou3pfm37uk1" path="res://utils/generation/tests/test.tscn" id="1_aqk2v"]
 [ext_resource type="Script" uid="uid://d4feanreabm81" path="res://addons/gaea/runtime/scene_nodes/generator.gd" id="2_036b0"]
-[ext_resource type="Script" uid="uid://cy7l1hq6155qn" path="res://utils/generation/tests/gaea_streaming_test.gd" id="2_ioo17"]
 [ext_resource type="Script" uid="uid://rfsrtakmflly" path="res://addons/gaea/runtime/scene_nodes/threading/task_pool.gd" id="3_dwbse"]
 [ext_resource type="Resource" uid="uid://da0y82qfcofvn" path="res://utils/generation/gaea_graphs/graph_gaea.tres" id="3_pkg7o"]
 [ext_resource type="Script" uid="uid://ct2w70ehn4avu" path="res://addons/gaea/runtime/resources/generation_settings.gd" id="4_gbfbk"]
@@ -60,8 +59,7 @@ sources/0 = SubResource("TileSetAtlasSource_wse8f")
 
 [node name="world" type="Node" unique_id=1402795195]
 
-[node name="test" type="Node" parent="." unique_id=106514020 instance=ExtResource("1_aqk2v")]
-script = ExtResource("2_ioo17")
+[node name="test" parent="." unique_id=106514020 instance=ExtResource("1_aqk2v")]
 
 [node name="GaeaGenerator" type="Node" parent="." unique_id=1313820040]
 script = ExtResource("2_036b0")

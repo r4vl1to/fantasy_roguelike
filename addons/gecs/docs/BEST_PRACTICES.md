@@ -25,8 +25,8 @@ extends Component
 @export var regeneration_rate: float = 1.0
 
 func _init(max_health: float = 100.0):
-    maximum = max_health
-    current = max_health
+	maximum = max_health
+	current = max_health
 ```
 
 ```gdscript
@@ -39,9 +39,9 @@ extends Component
 
 # This belongs in a system, not a component
 func take_damage(amount: float):
-    current -= amount
-    if current <= 0:
-        print("Entity died!")
+	current -= amount
+	if current <= 0:
+		print("Entity died!")
 ```
 
 ### Use Composition Over Inheritance
@@ -54,21 +54,21 @@ class_name Player
 extends Entity
 
 func define_components() -> Array:
-    return [
-        C_Health.new(100),
-        C_Transform.new(),
-        C_Input.new()
-    ]
+	return [
+		C_Health.new(100),
+		C_Transform.new(),
+		C_Input.new()
+	]
 
 class_name Enemy
 extends Entity
 
 func define_components() -> Array:
-    return [
-        C_Health.new(50),
-        C_Transform.new(),
-        C_AI.new()
-    ]
+	return [
+		C_Health.new(50),
+		C_Transform.new(),
+		C_AI.new()
+	]
 ```
 
 ### Design for Configuration
@@ -87,8 +87,8 @@ extends Component
 @export var can_fly: bool = false
 
 func _init(spd: float = 100.0, can_fly_: bool = false):
-    speed = spd
-    can_fly = can_fly_
+	speed = spd
+	can_fly = can_fly_
 ```
 
 ## System Design Patterns
@@ -116,15 +116,15 @@ Organize systems into logical groups using scene-based organization. Systems are
 ```gdscript
 # main.gd - Process systems in correct order
 func _process(delta):
-    world.process(delta, "run-first")  # Initialization systems
-    world.process(delta, "input")      # Input handling
-    world.process(delta, "gameplay")   # Game logic
-    world.process(delta, "ui")         # UI updates
-    world.process(delta, "run-last")   # Cleanup systems
+	world.process(delta, "run-first")  # Initialization systems
+	world.process(delta, "input")      # Input handling
+	world.process(delta, "gameplay")   # Game logic
+	world.process(delta, "ui")         # UI updates
+	world.process(delta, "run-last")   # Cleanup systems
 
 func _physics_process(delta):
-    world.process(delta, "physics")    # Physics systems
-    world.process(delta, "debug")      # Debug systems
+	world.process(delta, "physics")    # Physics systems
+	world.process(delta, "debug")      # Debug systems
 ```
 
 ### Early Exit for Performance
@@ -136,18 +136,18 @@ Return early from system processing when no work is needed.
 class_name HealthRegenerationSystem extends System
 
 func query():
-    return q.with_all([C_Health]).with_none([C_Dead])
+	return q.with_all([C_Health]).with_none([C_Dead])
 
 func process(entities: Array[Entity], components: Array, delta: float):
-    for entity in entities:
-        var health = entity.get_component(C_Health)
+	for entity in entities:
+		var health = entity.get_component(C_Health)
 
-        # Early exit if already at max health
-        if health.current >= health.maximum:
-            continue
+		# Early exit if already at max health
+		if health.current >= health.maximum:
+			continue
 
-        # Apply regeneration
-        health.current = min(health.current + health.regeneration_rate * delta, health.maximum)
+		# Apply regeneration
+		health.current = min(health.current + health.regeneration_rate * delta, health.maximum)
 ```
 
 ### Use CommandBuffer for Structural Changes During Iteration
@@ -159,22 +159,22 @@ When adding/removing components, entities, or relationships during system proces
 class_name LifetimeSystem extends System
 
 func query():
-    return q.with_all([C_Lifetime])
+	return q.with_all([C_Lifetime])
 
 func process(entities: Array[Entity], components: Array, delta: float):
-    for entity in entities:
-        var lifetime = entity.get_component(C_Lifetime)
-        lifetime.time -= delta
-        if lifetime.time <= 0:
-            cmd.remove_entity(entity)  # Queued, executed after system completes
+	for entity in entities:
+		var lifetime = entity.get_component(C_Lifetime)
+		lifetime.time -= delta
+		if lifetime.time <= 0:
+			cmd.remove_entity(entity)  # Queued, executed after system completes
 ```
 
 ```gdscript
 # Avoid - Direct removal during iteration requires backwards iteration
 func process(entities: Array[Entity], components: Array, delta: float):
-    for i in range(entities.size() - 1, -1, -1):
-        if should_delete(entities[i]):
-            ECS.world.remove_entity(entities[i])  # Modifies array during iteration
+	for i in range(entities.size() - 1, -1, -1):
+		if should_delete(entities[i]):
+			ECS.world.remove_entity(entities[i])  # Modifies array during iteration
 ```
 
 **Flush Modes** (`command_buffer_flush_mode: FlushMode`) control when queued commands execute:
@@ -236,7 +236,7 @@ project/
 │   ├── physics/        # Physics systems
 │   └── ui/             # UI systems
 └── observers/
-    └── o_transform.gd   # Reactive systems
+	└── o_transform.gd   # Reactive systems
 ```
 
 ## Entity Glue Code: What Belongs on the Entity vs. a Component
@@ -268,16 +268,16 @@ extends Entity
 @onready var nav_agent: NavigationAgent3D = get_node_or_null(^"NavigationAgent3D")
 
 func define_components() -> Array:
-    return [C_Sheep.new(), C_Wander.new(), C_Velocity.new()]
+	return [C_Sheep.new(), C_Wander.new(), C_Velocity.new()]
 ```
 
 ```gdscript
 # In the system — no per-frame scene-tree walk, no Dictionary lookup.
 func process(entities: Array[Entity], components: Array, delta: float) -> void:
-    for i in entities.size():
-        var sheep := entities[i] as Sheep
-        var agent := sheep.nav_agent
-        ...
+	for i in entities.size():
+		var sheep := entities[i] as Sheep
+		var agent := sheep.nav_agent
+		...
 ```
 
 **Anti-pattern — making it a component for no reason:**
@@ -321,7 +321,7 @@ for i in entities.size():
 var sheep_entity := entity as Sheep
 var sheep := (entity as Node) as Node3D
 if sheep == null or sheep_entity == null:
-    continue
+	continue
 ```
 
 ### 2. Sibling casts are rejected — relax helper signatures
@@ -337,12 +337,12 @@ Upcast to `Node` first (free since `Entity extends Node`), then downcast:
 var node: Node = entities[i]
 var body := node as CharacterBody3D
 if body:
-    body.velocity = ...
-    body.move_and_slide()
-    continue
+	body.velocity = ...
+	body.move_and_slide()
+	continue
 var node_3d := node as Node3D
 if node_3d:
-    node_3d.global_position += ...
+	node_3d.global_position += ...
 ```
 
 **b) When passing entities to helper functions:**
@@ -353,10 +353,10 @@ If a helper is typed `func face(node: Node3D, ...)`, calling `face(sheep, ...)` 
 # Helper accepts any Node, downcasts internally. Now Sheep / Shepherd / any
 # Entity-typed thing can be passed in without ceremony.
 static func face(node: Node, direction: Vector3, speed: float, delta: float) -> void:
-    var node_3d := node as Node3D
-    if node_3d == null:
-        return
-    # ... use node_3d.global_transform ...
+	var node_3d := node as Node3D
+	if node_3d == null:
+		return
+	# ... use node_3d.global_transform ...
 ```
 
 For helpers that need *both* the Entity API and Node3D properties (e.g. flocking, which reads `global_position` *and* `get_relationships`), take the entity's class type directly:
@@ -384,11 +384,11 @@ class_name Player
 extends Entity
 
 func on_ready():
-    # Common pattern: sync scene transform to component
-    if has_component(C_Transform):
-        var transform_comp = get_component(C_Transform)
-        transform_comp.transform = global_transform
-    add_to_group("player")
+	# Common pattern: sync scene transform to component
+	if has_component(C_Transform):
+		var transform_comp = get_component(C_Transform)
+		transform_comp.transform = global_transform
+	add_to_group("player")
 ```
 
 ### Enemy Pattern
@@ -536,19 +536,19 @@ class_name Player
 extends Entity
 
 func define_components() -> Array:
-    return [
-        C_Health.new(100),
-        C_Transform.new(),
-        C_Input.new(),
-        C_LocalPlayer.new()
-    ]
+	return [
+		C_Health.new(100),
+		C_Transform.new(),
+		C_Input.new(),
+		C_LocalPlayer.new()
+	]
 
 func on_ready():
-    # Initialize after components are ready
-    if has_component(C_Transform):
-        var transform_comp = get_component(C_Transform)
-        transform_comp.transform = global_transform
-    add_to_group("player")
+	# Initialize after components are ready
+	if has_component(C_Transform):
+		var transform_comp = get_component(C_Transform)
+		transform_comp.transform = global_transform
+	add_to_group("player")
 ```
 
 **Method 3: Hybrid Approach**
@@ -556,17 +556,17 @@ func on_ready():
 ```gdscript
 # Core components via Inspector, dynamic components via script
 func on_ready():
-    # Sync scene transform to component
-    if has_component(C_Transform):
-        var transform_comp = get_component(C_Transform)
-        transform_comp.transform = global_transform
+	# Sync scene transform to component
+	if has_component(C_Transform):
+		var transform_comp = get_component(C_Transform)
+		transform_comp.transform = global_transform
 
-    # Add conditional components based on game state
-    if GameState.is_multiplayer:
-        add_component(C_NetworkSync.new())
+	# Add conditional components based on game state
+	if GameState.is_multiplayer:
+		add_component(C_NetworkSync.new())
 
-    if GameState.debug_mode:
-        add_component(C_DebugInfo.new())
+	if GameState.debug_mode:
+		add_component(C_DebugInfo.new())
 ```
 
 ### Instantiating Entity Prefabs
@@ -579,18 +579,18 @@ func on_ready():
 @export var enemy_prefab: PackedScene
 
 func spawn_player(position: Vector3) -> Entity:
-    var player = player_prefab.instantiate() as Entity
-    player.global_position = position
-    get_tree().current_scene.add_child(player)  # Add to scene
-    ECS.world.add_entity(player)  # Register with ECS
-    return player
+	var player = player_prefab.instantiate() as Entity
+	player.global_position = position
+	get_tree().current_scene.add_child(player)  # Add to scene
+	ECS.world.add_entity(player)  # Register with ECS
+	return player
 
 func spawn_enemy(position: Vector3) -> Entity:
-    var enemy = enemy_prefab.instantiate() as Entity
-    enemy.global_position = position
-    get_tree().current_scene.add_child(enemy)
-    ECS.world.add_entity(enemy)
-    return enemy
+	var enemy = enemy_prefab.instantiate() as Entity
+	enemy.global_position = position
+	get_tree().current_scene.add_child(enemy)
+	ECS.world.add_entity(enemy)
+	return enemy
 ```
 
 **Advanced Spawning with SpawnSystem:**
@@ -601,19 +601,19 @@ class_name SpawnerSystem
 extends System
 
 func query():
-    return q.with_all([C_SpawnPoint])
+	return q.with_all([C_SpawnPoint])
 
 func process(entities: Array[Entity], components: Array, delta: float):
-    for entity in entities:
-        var spawn_point = entity.get_component(C_SpawnPoint)
+	for entity in entities:
+		var spawn_point = entity.get_component(C_SpawnPoint)
 
-        if spawn_point.should_spawn():
-            var spawned = spawn_point.prefab.instantiate() as Entity
-            spawned.global_position = entity.global_position
-            get_tree().current_scene.add_child(spawned)
-            ECS.world.add_entity(spawned)
+		if spawn_point.should_spawn():
+			var spawned = spawn_point.prefab.instantiate() as Entity
+			spawned.global_position = entity.global_position
+			get_tree().current_scene.add_child(spawned)
+			ECS.world.add_entity(spawned)
 
-            spawn_point.mark_spawned()
+			spawn_point.mark_spawned()
 ```
 
 **Prefab Management Best Practices:**
@@ -628,18 +628,18 @@ const WEAPON_PREFAB = preload("res://entities/items/e_weapon.tscn")
 class_name PrefabRegistry
 
 static var prefabs = {
-    "player": preload("res://entities/gameplay/e_player.tscn"),
-    "enemy": preload("res://entities/enemies/e_enemy.tscn"),
-    "weapon": preload("res://entities/items/e_weapon.tscn")
+	"player": preload("res://entities/gameplay/e_player.tscn"),
+	"enemy": preload("res://entities/enemies/e_enemy.tscn"),
+	"weapon": preload("res://entities/items/e_weapon.tscn")
 }
 
 static func spawn(prefab_name: String, position: Vector3) -> Entity:
-    var prefab = prefabs[prefab_name]
-    var entity = prefab.instantiate() as Entity
-    entity.global_position = position
-    get_tree().current_scene.add_child(entity)
-    ECS.world.add_entity(entity)
-    return entity
+	var prefab = prefabs[prefab_name]
+	var entity = prefab.instantiate() as Entity
+	entity.global_position = position
+	get_tree().current_scene.add_child(entity)
+	ECS.world.add_entity(entity)
+	return entity
 ```
 
 ## Main Scene Architecture
@@ -691,9 +691,9 @@ extends Node
 @onready var world: World = $World
 
 func _ready():
-    Bootstrap.bootstrap()  # Initialize any game-specific setup
-    ECS.world = world
-    # Systems are automatically registered via scene composition
+	Bootstrap.bootstrap()  # Initialize any game-specific setup
+	ECS.world = world
+	# Systems are automatically registered via scene composition
 ```
 
 **Creating a Default Systems Scene:**
@@ -710,15 +710,15 @@ func _ready():
 extends Node3D
 
 func _process(delta):
-    if ECS.world:
-        ECS.process(delta, "input")     # Handle input first
-        ECS.process(delta, "core")      # Core logic
-        ECS.process(delta, "gameplay")  # Game mechanics
-        ECS.process(delta, "render")    # UI/visual updates last
+	if ECS.world:
+		ECS.process(delta, "input")     # Handle input first
+		ECS.process(delta, "core")      # Core logic
+		ECS.process(delta, "gameplay")  # Game mechanics
+		ECS.process(delta, "render")    # UI/visual updates last
 
 func _physics_process(delta):
-    if ECS.world:
-        ECS.process(delta, "physics")   # Physics systems
+	if ECS.world:
+		ECS.process(delta, "physics")   # Physics systems
 ```
 
 ## Common Utility Patterns
@@ -730,19 +730,19 @@ Common transform synchronization patterns:
 ```gdscript
 # Sync entity transform TO component (scene -> component)
 static func sync_transform_to_component(entity: Entity):
-    if entity.has_component(C_Transform):
-        var transform_comp = entity.get_component(C_Transform)
-        transform_comp.transform = entity.global_transform
+	if entity.has_component(C_Transform):
+		var transform_comp = entity.get_component(C_Transform)
+		transform_comp.transform = entity.global_transform
 
 # Sync component transform TO entity (component -> scene)
 static func sync_component_to_transform(entity: Entity):
-    if entity.has_component(C_Transform):
-        var transform_comp = entity.get_component(C_Transform)
-        entity.global_transform = transform_comp.transform
+	if entity.has_component(C_Transform):
+		var transform_comp = entity.get_component(C_Transform)
+		entity.global_transform = transform_comp.transform
 
 # Common usage in entity on_ready()
 func on_ready():
-    sync_transform_to_component(self)  # Sync scene position to C_Transform
+	sync_transform_to_component(self)  # Sync scene position to C_Transform
 ```
 
 ### Component Helpers
@@ -752,16 +752,16 @@ Build helpers for common component operations:
 ```gdscript
 # Helper functions you can add to your project
 static func add_health_to_entity(entity: Entity, max_health: float):
-    var health = C_Health.new(max_health)
-    entity.add_component(health)
-    return health
+	var health = C_Health.new(max_health)
+	entity.add_component(health)
+	return health
 
 static func damage_entity(entity: Entity, amount: float):
-    if entity.has_component(C_Health):
-        var health = entity.get_component(C_Health)
-        health.current = max(0, health.current - amount)
-        return health.current <= 0  # Return true if entity died
-    return false
+	if entity.has_component(C_Health):
+		var health = entity.get_component(C_Health)
+		health.current = max(0, health.current - amount)
+		return health.current <= 0  # Return true if entity died
+	return false
 ```
 
 ## Relationship Management Best Practices
@@ -782,10 +782,10 @@ const PARTIAL_STACKS = 3
 const ALL_STACKS = -1
 
 func cleanse_debuffs(entity: Entity, power: int):
-    match power:
-        1: entity.remove_relationship(Relations.any_debuff(), WEAK_CLEANSE)
-        2: entity.remove_relationship(Relations.any_debuff(), MEDIUM_CLEANSE)
-        3: entity.remove_relationship(Relations.any_debuff(), STRONG_CLEANSE)
+	match power:
+		1: entity.remove_relationship(Relations.any_debuff(), WEAK_CLEANSE)
+		2: entity.remove_relationship(Relations.any_debuff(), MEDIUM_CLEANSE)
+		3: entity.remove_relationship(Relations.any_debuff(), STRONG_CLEANSE)
 ```
 
 **Validate Before Removal:**
@@ -793,20 +793,20 @@ func cleanse_debuffs(entity: Entity, power: int):
 ```gdscript
 # Excellent - Safe removal with validation
 func safe_partial_heal(entity: Entity, heal_amount: int):
-    var damage_rels = entity.get_relationships(Relations.any_damage())
-    if damage_rels.is_empty():
-        print("Entity has no damage to heal")
-        return
+	var damage_rels = entity.get_relationships(Relations.any_damage())
+	if damage_rels.is_empty():
+		print("Entity has no damage to heal")
+		return
 
-    var to_heal = min(heal_amount, damage_rels.size())
-    entity.remove_relationship(Relations.any_damage(), to_heal)
-    print("Healed ", to_heal, " damage effects")
+	var to_heal = min(heal_amount, damage_rels.size())
+	entity.remove_relationship(Relations.any_damage(), to_heal)
+	print("Healed ", to_heal, " damage effects")
 
 # Good - Helper function with built-in safety
 func remove_poison_stacks(entity: Entity, stacks_to_remove: int):
-    if stacks_to_remove <= 0:
-        return
-    entity.remove_relationship(Relations.poison_effect(), stacks_to_remove)
+	if stacks_to_remove <= 0:
+		return
+	entity.remove_relationship(Relations.poison_effect(), stacks_to_remove)
 ```
 
 **System Integration Patterns:**
@@ -816,45 +816,45 @@ func remove_poison_stacks(entity: Entity, stacks_to_remove: int):
 class_name StatusEffectSystem extends System
 
 func process(entities: Array[Entity], components: Array, delta: float):
-    # Example: process spell casting entities
-    for entity in entities:
-        var spell = entity.get_component(C_SpellCaster)
-        if spell.is_casting_cleanse():
-            process_cleanse_spell(entity, spell.target, spell.power)
+	# Example: process spell casting entities
+	for entity in entities:
+		var spell = entity.get_component(C_SpellCaster)
+		if spell.is_casting_cleanse():
+			process_cleanse_spell(entity, spell.target, spell.power)
 
 func process_cleanse_spell(caster: Entity, target: Entity, spell_power: int):
-    # Calculate cleanse strength based on spell power and caster stats
-    var cleanse_strength = calculate_cleanse_strength(caster, spell_power)
+	# Calculate cleanse strength based on spell power and caster stats
+	var cleanse_strength = calculate_cleanse_strength(caster, spell_power)
 
-    # Apply graduated cleansing based on strength
-    match cleanse_strength:
-        1..3:   target.remove_relationship(Relations.any_debuff(), 1)
-        4..6:   target.remove_relationship(Relations.any_debuff(), 2)
-        7..9:   target.remove_relationship(Relations.any_debuff(), 3)
-        _:      target.remove_relationship(Relations.any_debuff())  # Remove all
+	# Apply graduated cleansing based on strength
+	match cleanse_strength:
+		1..3:   target.remove_relationship(Relations.any_debuff(), 1)
+		4..6:   target.remove_relationship(Relations.any_debuff(), 2)
+		7..9:   target.remove_relationship(Relations.any_debuff(), 3)
+		_:      target.remove_relationship(Relations.any_debuff())  # Remove all
 
 func process_antidote_item(user: Entity, antidote_strength: int):
-    # Remove poison based on antidote quality
-    user.remove_relationship(Relations.poison_effect(), antidote_strength)
+	# Remove poison based on antidote quality
+	user.remove_relationship(Relations.poison_effect(), antidote_strength)
 
-    # Remove poison resistance temporarily to prevent immediate repoison
-    user.add_relationship(Relations.poison_immunity(), 5.0)  # 5 second immunity
+	# Remove poison resistance temporarily to prevent immediate repoison
+	user.add_relationship(Relations.poison_immunity(), 5.0)  # 5 second immunity
 
 class_name InventorySystem extends System
 
 func consume_item_stack(entity: Entity, item_type: Script, count: int):
-    # Consume specific number of items from inventory
-    entity.remove_relationship(
-        Relationship.new(C_HasItem.new(), item_type),
-        count
-    )
+	# Consume specific number of items from inventory
+	entity.remove_relationship(
+		Relationship.new(C_HasItem.new(), item_type),
+		count
+	)
 
 func use_consumable(entity: Entity, item: Component, quantity: int = 1):
-    # Use consumable items with quantity
-    entity.remove_relationship(
-        Relationship.new(C_HasItem.new(), item),
-        quantity
-    )
+	# Use consumable items with quantity
+	entity.remove_relationship(
+		Relationship.new(C_HasItem.new(), item),
+		quantity
+	)
 ```
 
 **Performance Optimization:**
@@ -862,22 +862,22 @@ func use_consumable(entity: Entity, item: Component, quantity: int = 1):
 ```gdscript
 # Good - Cache relationships for multiple operations
 func optimize_bulk_removal(entity: Entity):
-    # Cache the relationship for reuse
-    var poison_rel = Relations.poison_effect()
-    var damage_rel = Relations.any_damage()
+	# Cache the relationship for reuse
+	var poison_rel = Relations.poison_effect()
+	var damage_rel = Relations.any_damage()
 
-    # Multiple targeted removals
-    entity.remove_relationship(poison_rel, 2)      # Remove 2 poison
-    entity.remove_relationship(damage_rel, 1)      # Remove 1 damage
-    entity.remove_relationship(poison_rel, 1)      # Remove 1 more poison
+	# Multiple targeted removals
+	entity.remove_relationship(poison_rel, 2)      # Remove 2 poison
+	entity.remove_relationship(damage_rel, 1)      # Remove 1 damage
+	entity.remove_relationship(poison_rel, 1)      # Remove 1 more poison
 
 # Excellent - Batch removal patterns
 func batch_cleanup(entities: Array[Entity]):
-    var cleanup_rel = Relations.temporary_effect()
+	var cleanup_rel = Relations.temporary_effect()
 
-    for entity in entities:
-        # Remove up to 3 temporary effects from each entity
-        entity.remove_relationship(cleanup_rel, 3)
+	for entity in entities:
+		# Remove up to 3 temporary effects from each entity
+		entity.remove_relationship(cleanup_rel, 3)
 ```
 
 ## Production Patterns from Real Projects
@@ -899,19 +899,19 @@ static var attacks: Relationship = Relationship.new(R_Attacks.new(), null)
 static var equips: Relationship = Relationship.new(R_Equips.new(), null)
 
 static func child_of_entity(parent: Entity) -> Relationship:
-    return Relationship.new(R_ChildOf.new(), parent)
+	return Relationship.new(R_ChildOf.new(), parent)
 
 static func attacks_target(target: Entity) -> Relationship:
-    return Relationship.new(R_Attacks.new(), target)
+	return Relationship.new(R_Attacks.new(), target)
 ```
 
 ```gdscript
 # Usage in systems — clean, no inline Relationship construction
 func process(entities: Array[Entity], components: Array, delta: float):
-    for entity in entities:
-        if entity.has_relationship(Rels.attacks):
-            apply_attack(entity)
-        entity.remove_relationship(Rels.child_of, 1)
+	for entity in entities:
+		if entity.has_relationship(Rels.attacks):
+			apply_attack(entity)
+		entity.remove_relationship(Rels.child_of, 1)
 ```
 
 ### Sub-systems for Complex Logic
@@ -924,26 +924,26 @@ class_name WeaponsSystem
 extends System
 
 func sub_systems() -> Array[Array]:
-    return [
-        [q.with_all([C_Weapon, C_Firing]), handle_firing],
-        [q.with_all([C_Weapon, C_Reloading]), handle_reloading]
-    ]
+	return [
+		[q.with_all([C_Weapon, C_Firing]), handle_firing],
+		[q.with_all([C_Weapon, C_Reloading]), handle_reloading]
+	]
 
 func handle_firing(entities: Array[Entity], _components: Array, delta: float):
-    for entity in entities:
-        var weapon = entity.get_component(C_Weapon)
-        weapon.fire_timer -= delta
-        if weapon.fire_timer <= 0:
-            cmd.add_component(entity, C_ProjectileSpawn.new(weapon.muzzle_position))
-            weapon.fire_timer = weapon.fire_rate
+	for entity in entities:
+		var weapon = entity.get_component(C_Weapon)
+		weapon.fire_timer -= delta
+		if weapon.fire_timer <= 0:
+			cmd.add_component(entity, C_ProjectileSpawn.new(weapon.muzzle_position))
+			weapon.fire_timer = weapon.fire_rate
 
 func handle_reloading(entities: Array[Entity], _components: Array, delta: float):
-    for entity in entities:
-        var weapon = entity.get_component(C_Weapon)
-        weapon.reload_timer -= delta
-        if weapon.reload_timer <= 0:
-            weapon.ammo = weapon.max_ammo
-            cmd.remove_component(entity, C_Reloading)
+	for entity in entities:
+		var weapon = entity.get_component(C_Weapon)
+		weapon.reload_timer -= delta
+		if weapon.reload_timer <= 0:
+			weapon.ammo = weapon.max_ammo
+			cmd.remove_component(entity, C_Reloading)
 ```
 
 ### PendingDelete Pattern
@@ -964,26 +964,26 @@ class_name PendingDeleteSystem
 extends System
 
 func query():
-    return q.with_all([C_IsPendingDelete])
+	return q.with_all([C_IsPendingDelete])
 
 func process(entities: Array[Entity], components: Array, delta: float):
-    for entity in entities:
-        var pending = entity.get_component(C_IsPendingDelete)
-        if pending.delete_delay <= 0.0:
-            cmd.remove_entity(entity)
-        else:
-            pending.delete_delay -= delta
+	for entity in entities:
+		var pending = entity.get_component(C_IsPendingDelete)
+		if pending.delete_delay <= 0.0:
+			cmd.remove_entity(entity)
+		else:
+			pending.delete_delay -= delta
 ```
 
 ```gdscript
 # Any system can stage an entity for deletion without immediate removal
 func process(entities: Array[Entity], components: Array, delta: float):
-    for entity in entities:
-        var health = entity.get_component(C_Health)
-        if health.current <= 0:
-            # Play death anim, then delete after 0.5s
-            cmd.add_component(entity, C_IsPendingDelete.new())
-            entity.get_component(C_IsPendingDelete).delete_delay = 0.5
+	for entity in entities:
+		var health = entity.get_component(C_Health)
+		if health.current <= 0:
+			# Play death anim, then delete after 0.5s
+			cmd.add_component(entity, C_IsPendingDelete.new())
+			entity.get_component(C_IsPendingDelete).delete_delay = 0.5
 ```
 
 This pattern cleanly separates "mark for deletion" from "actually remove", keeps your iteration systems simple, and gives you a single place to add cleanup logic (sound, VFX, loot drops) before the entity disappears.

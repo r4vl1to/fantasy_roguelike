@@ -1,0 +1,83 @@
+[gd_scene format=3 uid="uid://c1gameplay001"]
+
+[ext_resource type="Script" uid="uid://d4feanreabm81" path="res://addons/gaea/runtime/scene_nodes/generator.gd" id="1_generator"]
+[ext_resource type="Script" uid="uid://rfsrtakmflly" path="res://addons/gaea/runtime/scene_nodes/threading/task_pool.gd" id="2_taskpool"]
+[ext_resource type="Resource" uid="uid://da0y82qfcofvn" path="res://utils/generation/gaea_graphs/graph_gaea.tres" id="3_graph"]
+[ext_resource type="Script" uid="uid://ct2w70ehn4avu" path="res://addons/gaea/runtime/resources/generation_settings.gd" id="4_settings"]
+[ext_resource type="Script" uid="uid://bgk1wayjhm07j" path="res://utils/generation/GaeaWorldManager.gd" id="5_manager"]
+[ext_resource type="Texture2D" uid="uid://cnrqjqddqe2cb" path="res://assets/tileset/spritesheet.png" id="6_tiles"]
+[ext_resource type="Script" uid="uid://d4f0u6hp4j5rj" path="res://utils/generation/GaeaChunkRenderer.gd" id="7_renderer"]
+[ext_resource type="Script" uid="uid://bhr1gxtrhfja5" path="res://game.gd" id="8_game"]
+[ext_resource type="Script" uid="uid://dq3casekwxsgj" path="res://addons/strategy_camera/strategy_camera.gd" id="9_vef74"]
+
+[sub_resource type="Resource" id="Resource_settings"]
+script = ExtResource("4_settings")
+seed = 3151708176
+metadata/_custom_type_script = "uid://ct2w70ehn4avu"
+
+[sub_resource type="Resource" id="Resource_taskpool"]
+script = ExtResource("2_taskpool")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_game"]
+texture = ExtResource("6_tiles")
+0:0/next_alternative_id = 7
+0:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+2:1/0 = 0
+3:1/0 = 0
+3:2/0 = 0
+2:2/0 = 0
+2:3/0 = 0
+1:3/0 = 0
+0:3/0 = 0
+0:2/0 = 0
+3:3/0 = 0
+1:2/0 = 0
+1:4/0 = 0
+2:4/0 = 0
+3:4/0 = 0
+2:5/0 = 0
+1:5/0 = 0
+3:5/0 = 0
+3:0/next_alternative_id = 2
+3:0/0 = 0
+2:0/next_alternative_id = 2
+2:0/0 = 0
+1:0/next_alternative_id = 3
+1:0/0 = 0
+4:0/0 = 0
+4:1/0 = 0
+4:2/0 = 0
+4:3/0 = 0
+4:4/0 = 0
+4:5/0 = 0
+0:4/0 = 0
+0:5/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_game"]
+sources/0 = SubResource("TileSetAtlasSource_game")
+
+[node name="Game" type="Node2D" unique_id=1252093323]
+script = ExtResource("8_game")
+
+[node name="GaeaGenerator" type="Node" parent="." unique_id=1005867024]
+script = ExtResource("1_generator")
+graph = ExtResource("3_graph")
+settings = SubResource("Resource_settings")
+task_pool = SubResource("Resource_taskpool")
+metadata/_custom_type_script = "uid://d4feanreabm81"
+
+[node name="GaeaWorldManager" type="Node" parent="." unique_id=969150819]
+script = ExtResource("5_manager")
+metadata/_custom_type_script = "uid://bgk1wayjhm07j"
+
+[node name="GaeaChunkRenderer" type="Node2D" parent="." unique_id=35471815]
+script = ExtResource("7_renderer")
+shared_tile_set = SubResource("TileSet_game")
+metadata/_custom_type_script = "uid://d4f0u6hp4j5rj"
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1087970317]
+position_smoothing_enabled = true
+position_smoothing_speed = 10.0
+script = ExtResource("9_vef74")

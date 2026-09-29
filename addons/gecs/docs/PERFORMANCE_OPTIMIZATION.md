@@ -31,18 +31,18 @@ Always profile before optimizing. GECS provides query cache statistics for perfo
 ```gdscript
 # Main.gd
 func _process(delta):
-    ECS.process(delta)
+	ECS.process(delta)
 
-    # Print cache performance stats every second
-    if Engine.get_process_frames() % 60 == 0:
-        var cache_stats = ECS.world.get_cache_stats()
-        print("ECS Performance:")
-        print("  Query cache hits: ", cache_stats.get("cache_hits", 0))
-        print("  Query cache misses: ", cache_stats.get("cache_misses", 0))
-        print("  Total entities: ", ECS.world.entities.size())
+	# Print cache performance stats every second
+	if Engine.get_process_frames() % 60 == 0:
+		var cache_stats = ECS.world.get_cache_stats()
+		print("ECS Performance:")
+		print("  Query cache hits: ", cache_stats.get("cache_hits", 0))
+		print("  Query cache misses: ", cache_stats.get("cache_misses", 0))
+		print("  Total entities: ", ECS.world.entities.size())
 
-        # Reset stats for next measurement period
-        ECS.world.reset_cache_stats()
+		# Reset stats for next measurement period
+		ECS.world.reset_cache_stats()
 ```
 
 ### Use Godot's Built-in Profiler
@@ -71,23 +71,23 @@ Query performance ranking (10,000 entities, Godot 4.6):
 # FASTEST - Use enabled/disabled queries when you only need active entities
 class_name ActiveSystemsOnly extends System
 func query():
-    return q.enabled()  # Constant-time O(1) performance!
+	return q.enabled()  # Constant-time O(1) performance!
 
 # EXCELLENT - Component-based queries (heavily optimized cache)
 class_name MovementSystem extends System
 func query():
-    return q.with_all([C_Position, C_Velocity])  # ~0.2ms for 10K entities
+	return q.with_all([C_Position, C_Velocity])  # ~0.2ms for 10K entities
 
 # GOOD - Use with_any sparingly, split into multiple systems when possible
 class_name DamageableSystem extends System
 func query():
-    return q.with_any([C_Player, C_Enemy]).with_all([C_Health])
+	return q.with_any([C_Player, C_Enemy]).with_all([C_Health])
 
 # AVOID - Group queries are the slowest
 class_name PlayerSystem extends System
 func query():
-    return q.with_group(["player"])  # Consider using components instead
-    # Better: q.with_all([C_Player])
+	return q.with_group(["player"])  # Consider using components instead
+	# Better: q.with_all([C_Player])
 ```
 
 ### 2. Use Proper System Query Pattern
@@ -99,20 +99,20 @@ GECS automatically handles query optimization when you follow the standard patte
 class_name MovementSystem extends System
 
 func query():
-    return q.with_all([C_Position, C_Velocity]).with_none([C_Frozen])
+	return q.with_all([C_Position, C_Velocity]).with_none([C_Frozen])
 
 func process(entities: Array[Entity], components: Array, delta: float):
-    # Process each entity
-    for entity in entities:
-        var pos = entity.get_component(C_Position)
-        var vel = entity.get_component(C_Velocity)
-        pos.value += vel.value * delta
+	# Process each entity
+	for entity in entities:
+		var pos = entity.get_component(C_Position)
+		var vel = entity.get_component(C_Velocity)
+		pos.value += vel.value * delta
 ```
 
 ```gdscript
 # Avoid - Manual query building in process methods
 func process(entities: Array[Entity], components: Array, delta: float):
-    # Don't do this - bypasses automatic query optimization
+	# Don't do this - bypasses automatic query optimization
     var custom_entities = ECS.world.query.with_all([C_Position]).execute()
     # Process custom_entities...
 ```
@@ -288,13 +288,13 @@ When states are long-lasting or infrequent, separate components provide precise 
 # Good for rare/permanent states (player vs enemy, permanent abilities)
 class_name MovementSystem extends System
 func query():
-    return q.with_all([C_Position, C_Velocity]).with_none([C_Paralyzed])
-    # Precise query - only entities that can move
+	return q.with_all([C_Position, C_Velocity]).with_none([C_Paralyzed])
+	# Precise query - only entities that can move
 
 # Separate systems can target specific states precisely
 class_name ParalyzedSystem extends System
 func query():
-    return q.with_all([C_Paralyzed])  # Only paralyzed entities
+	return q.with_all([C_Paralyzed])  # Only paralyzed entities
 ```
 
 **Tradeoffs:**
@@ -321,18 +321,18 @@ Return early when no processing is needed:
 class_name HealthRegenerationSystem extends System
 
 func process(entities: Array[Entity], components: Array, delta: float):
-    for entity in entities:
-        var health = entity.get_component(C_Health)
+	for entity in entities:
+		var health = entity.get_component(C_Health)
 
-        # Early exits for common cases
-        if health.current >= health.maximum:
-            continue  # Already at full health
+		# Early exits for common cases
+		if health.current >= health.maximum:
+			continue  # Already at full health
 
-        if health.regeneration_rate <= 0:
-            continue  # No regeneration configured
+		if health.regeneration_rate <= 0:
+			continue  # No regeneration configured
 
-        # Only do expensive work when needed
-        health.current = min(health.current + health.regeneration_rate * delta, health.maximum)
+		# Only do expensive work when needed
+		health.current = min(health.current + health.regeneration_rate * delta, health.maximum)
 ```
 
 ### Batch Entity Operations
@@ -344,20 +344,20 @@ Group entity operations together. Use CommandBuffer for deferred execution with 
 class_name CleanupSystem extends System
 
 func query():
-    return q.with_all([C_Dead])
+	return q.with_all([C_Dead])
 
 func process(entities: Array[Entity], components: Array, delta: float):
-    for entity in entities:
-        cmd.remove_entity(entity)  # Queued, single cache invalidation when flushed
+	for entity in entities:
+		cmd.remove_entity(entity)  # Queued, single cache invalidation when flushed
 
 # Good - Batch creation outside of systems
 func spawn_enemy_wave():
-    var enemies: Array[Entity] = []
-    for i in range(50):
-        var enemy = Entity.new()
-        setup_enemy_components(enemy)
-        enemies.append(enemy)
-    ECS.world.add_entities(enemies)
+	var enemies: Array[Entity] = []
+	for i in range(50):
+		var enemy = Entity.new()
+		setup_enemy_components(enemy)
+		enemies.append(enemy)
+	ECS.world.add_entities(enemies)
 ```
 
 **CommandBuffer flush modes** (`command_buffer_flush_mode: FlushMode`) for performance tuning:
@@ -405,4 +405,3 @@ print("Cache hit rate: ", stats.get("cache_hits", 0) / (stats.get("cache_hits", 
 ```
 
 **Need more help?** Check the [Troubleshooting Guide](TROUBLESHOOTING.md) for specific performance issues.
-

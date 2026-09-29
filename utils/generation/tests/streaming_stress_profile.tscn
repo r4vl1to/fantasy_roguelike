@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://utils/generation/tests/streaming_stress_runner.gd" id="1_stress"]
+[ext_resource type="PackedScene" path="res://world.tscn" id="2_world"]
+
+[node name="streaming_stress_profile" type="Node"]
+script = ExtResource("1_stress")
+[node name="World" parent="." instance=ExtResource("2_world")]

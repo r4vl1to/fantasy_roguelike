@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c7e4n2chunkent"]
+
+[ext_resource type="Script" path="res://utils/generation/tests/chunk_entity_persistence_test.gd" id="1_chunkent"]
+
+[node name="chunk_entity_persistence_test" type="Node"]
+script = ExtResource("1_chunkent")

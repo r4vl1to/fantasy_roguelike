@@ -1,0 +1,3 @@
+StrategyCamera addon source: https://github.com/thomaswalsh-cvle/godot-strategy-camera
+Upstream revision downloaded: 16b1b15812aa869586f737873e667b508523650f
+License: MIT; see LICENSE.md.
