@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://b2jmk8loc0is2"]
+
+[ext_resource type="Script" uid="uid://d4feanreabm81" path="res://addons/gaea/runtime/scene_nodes/generator.gd" id="1_kdubu"]
+[ext_resource type="Resource" uid="uid://da0y82qfcofvn" path="res://utils/generation/gaea_graphs/graph_gaea.tres" id="2_d21ai"]
+[ext_resource type="Script" uid="uid://ct2w70ehn4avu" path="res://addons/gaea/runtime/resources/generation_settings.gd" id="3_rj586"]
+[ext_resource type="Script" uid="uid://rfsrtakmflly" path="res://addons/gaea/runtime/scene_nodes/threading/task_pool.gd" id="4_4d7sh"]
+[ext_resource type="Script" uid="uid://b4x16tyyfihmb" path="res://addons/gaea/runtime/scene_nodes/renderers/tilemap_renderer.gd" id="5_ir8iy"]
+[ext_resource type="Texture2D" uid="uid://cnrqjqddqe2cb" path="res://assets/tileset/spritesheet.png" id="6_hqns4"]
+[ext_resource type="PackedScene" uid="uid://c5ou3pfm37uk1" path="res://utils/generation/tests/test.tscn" id="7_d21ai"]
+
+[sub_resource type="Resource" id="Resource_l12od"]
+script = ExtResource("3_rj586")
+seed = 2070572185
+metadata/_custom_type_script = "uid://ct2w70ehn4avu"
+
+[sub_resource type="Resource" id="Resource_x0ka3"]
+script = ExtResource("4_4d7sh")
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0h7mo"]
+texture = ExtResource("6_hqns4")
+0:0/next_alternative_id = 7
+0:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+2:1/0 = 0
+3:1/0 = 0
+3:2/0 = 0
+2:2/0 = 0
+2:3/0 = 0
+1:3/0 = 0
+0:3/0 = 0
+0:2/0 = 0
+3:3/0 = 0
+1:2/0 = 0
+1:4/0 = 0
+2:4/0 = 0
+3:4/0 = 0
+2:5/0 = 0
+1:5/0 = 0
+3:5/0 = 0
+3:0/next_alternative_id = 2
+3:0/0 = 0
+2:0/next_alternative_id = 2
+2:0/0 = 0
+1:0/next_alternative_id = 3
+1:0/0 = 0
+4:0/0 = 0
+4:1/0 = 0
+4:2/0 = 0
+4:3/0 = 0
+4:4/0 = 0
+4:5/0 = 0
+0:4/0 = 0
+0:5/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_l12od"]
+sources/0 = SubResource("TileSetAtlasSource_0h7mo")
+
+[node name="Node2D" type="Node2D" unique_id=1539307366]
+
+[node name="GaeaGenerator" type="Node" parent="." unique_id=1467998948]
+script = ExtResource("1_kdubu")
+graph = ExtResource("2_d21ai")
+settings = SubResource("Resource_l12od")
+task_pool = SubResource("Resource_x0ka3")
+metadata/_custom_type_script = "uid://d4feanreabm81"
+
+[node name="TileMapGaeaRenderer" type="Node" parent="." unique_id=1231525395 node_paths=PackedStringArray("tile_map_layers", "generator")]
+script = ExtResource("5_ir8iy")
+tile_map_layers = [NodePath("../TileMapLayer")]
+generator = NodePath("../GaeaGenerator")
+metadata/_custom_type_script = "uid://b4x16tyyfihmb"
+
+[node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=362157976]
+tile_set = SubResource("TileSet_l12od")
+
+[node name="test" parent="." unique_id=106514020 instance=ExtResource("7_d21ai")]

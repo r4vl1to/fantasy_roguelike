@@ -1,0 +1,228 @@
+[gd_resource type="Resource" script_class="GaeaGraph" format=3 uid="uid://da0y82qfcofvn"]
+
+[ext_resource type="Script" uid="uid://e45byecr4gi6" path="res://addons/gaea/runtime/resources/materials/data/tilemap_material.gd" id="1_sq17b"]
+[ext_resource type="Script" uid="uid://3qsmwhn2sk47" path="res://addons/gaea/runtime/resources/layer.gd" id="2_ybu03"]
+[ext_resource type="Script" uid="uid://dae6umbqb872e" path="res://addons/gaea/runtime/resources/graph.gd" id="3_472kx"]
+
+[sub_resource type="Resource" id="Resource_bx6as"]
+script = ExtResource("1_sq17b")
+preview_color = Color(0.718398, 0.71740836, 0.81212604, 1)
+metadata/_custom_type_script = "uid://e45byecr4gi6"
+
+[sub_resource type="Resource" id="Resource_maqtv"]
+script = ExtResource("1_sq17b")
+atlas_coord = Vector2i(0, 1)
+preview_color = Color(0.966841, 0.3368023, 0.15267277, 1)
+metadata/_custom_type_script = "uid://e45byecr4gi6"
+
+[sub_resource type="Resource" id="Resource_jiytp"]
+script = ExtResource("1_sq17b")
+atlas_coord = Vector2i(0, 3)
+preview_color = Color(0.22491094, 0.15811807, 0.25704274, 1)
+metadata/_custom_type_script = "uid://e45byecr4gi6"
+
+[sub_resource type="Resource" id="Resource_ev2h5"]
+script = ExtResource("1_sq17b")
+atlas_coord = Vector2i(0, 4)
+preview_color = Color(0.3272329, 0.7955192, 0.8283139, 1)
+metadata/_custom_type_script = "uid://e45byecr4gi6"
+
+[sub_resource type="Resource" id="Resource_8deqa"]
+script = ExtResource("1_sq17b")
+atlas_coord = Vector2i(1, 5)
+preview_color = Color(0.841513, 0.4311985, 0.8873727, 1)
+metadata/_custom_type_script = "uid://e45byecr4gi6"
+
+[sub_resource type="Resource" id="Resource_otc4e"]
+script = ExtResource("2_ybu03")
+
+[resource]
+script = ExtResource("3_472kx")
+layers = Array[ExtResource("2_ybu03")]([SubResource("Resource_otc4e")])
+preview_seed = 3226665727
+preview_world_size = Vector3i(64, 64, 1)
+preview_chunk_size = Vector3i(64, 64, 1)
+save_version = 5
+_connections = Array[StringName]([&"8-0-2-1", &"9-0-3-1", &"10-0-4-1", &"11-0-5-1", &"12-0-6-1", &"2-0-13-0", &"14-0-0-0", &"1-0-2-0", &"1-0-3-0", &"1-0-4-0", &"1-0-5-0", &"1-0-6-0", &"4-0-13-3", &"3-0-13-2", &"6-0-14-2", &"5-0-14-1", &"13-0-14-0"])
+_node_data = Dictionary[int, Dictionary]({
+0: {
+&"position": Vector2(1120, 1120),
+&"salt": 2116446419,
+&"type": 0,
+&"uid": "uid://dol7xviglksx4"
+},
+1: {
+&"arguments": {
+&"frequency": 0.01,
+&"lacunarity": 75.0,
+&"octaves": 5.0
+},
+&"enums": [1],
+&"position": Vector2(-80, 600),
+&"salt": 2861453395,
+&"type": 0,
+&"uid": "uid://cgjyi804j05dy"
+},
+2: {
+&"arguments": {
+&"range": {
+"max": 0.3,
+"min": 0.0
+}
+},
+&"position": Vector2(520, 240),
+&"salt": 391346905,
+&"type": 0,
+&"uid": "uid://djjvx650evm0n"
+},
+3: {
+&"arguments": {
+&"range": {
+"max": 0.4,
+"min": 0.3
+}
+},
+&"position": Vector2(520, 500),
+&"salt": 4063844479,
+&"type": 0,
+&"uid": "uid://djjvx650evm0n"
+},
+4: {
+&"arguments": {
+&"range": {
+"max": 0.6,
+"min": 0.4
+}
+},
+&"position": Vector2(520, 740),
+&"salt": 77387176,
+&"type": 0,
+&"uid": "uid://djjvx650evm0n"
+},
+5: {
+&"arguments": {
+&"range": {
+"max": 0.75,
+"min": 0.6
+}
+},
+&"position": Vector2(520, 980),
+&"salt": 3570026437,
+&"type": 0,
+&"uid": "uid://djjvx650evm0n"
+},
+6: {
+&"arguments": {
+&"range": {
+"max": 1.0,
+"min": 0.75
+}
+},
+&"position": Vector2(520, 1220),
+&"salt": 1880373565,
+&"type": 0,
+&"uid": "uid://djjvx650evm0n"
+},
+8: {
+&"arguments": {
+&"name": "water"
+},
+&"position": Vector2(320, 300),
+&"salt": 2423343948,
+&"type": 0,
+&"uid": "uid://cqs1w714pbfql"
+},
+9: {
+&"arguments": {
+&"name": "sand"
+},
+&"position": Vector2(320, 560),
+&"salt": 3517758445,
+&"type": 0,
+&"uid": "uid://cqs1w714pbfql"
+},
+10: {
+&"arguments": {
+&"name": "grass"
+},
+&"position": Vector2(320, 800),
+&"salt": 1947497197,
+&"type": 0,
+&"uid": "uid://cqs1w714pbfql"
+},
+11: {
+&"arguments": {
+&"name": "dirt"
+},
+&"position": Vector2(320, 1040),
+&"salt": 4110469053,
+&"type": 0,
+&"uid": "uid://cqs1w714pbfql"
+},
+12: {
+&"arguments": {
+&"name": "stone"
+},
+&"position": Vector2(320, 1280),
+&"salt": 3205579945,
+&"type": 0,
+&"uid": "uid://cqs1w714pbfql"
+},
+13: {
+&"enums": [0],
+&"position": Vector2(860, 700),
+&"salt": 2831215847,
+&"type": 0,
+&"uid": "uid://d2f6bjkxcn7jl"
+},
+14: {
+&"enums": [0],
+&"position": Vector2(900, 960),
+&"salt": 1423860103,
+&"type": 0,
+&"uid": "uid://d2f6bjkxcn7jl"
+}
+})
+_parameters = Dictionary[StringName, Variant]({
+&"dirt": {
+"hint": 17,
+"hint_string": "GaeaMaterial",
+"name": &"dirt",
+"type": 24,
+"usage": 4,
+"value": SubResource("Resource_bx6as")
+},
+&"grass": {
+"hint": 17,
+"hint_string": "GaeaMaterial",
+"name": &"grass",
+"type": 24,
+"usage": 4,
+"value": SubResource("Resource_maqtv")
+},
+&"sand": {
+"hint": 17,
+"hint_string": "GaeaMaterial",
+"name": &"sand",
+"type": 24,
+"usage": 4,
+"value": SubResource("Resource_jiytp")
+},
+&"stone": {
+"hint": 17,
+"hint_string": "GaeaMaterial",
+"name": &"stone",
+"type": 24,
+"usage": 4,
+"value": SubResource("Resource_ev2h5")
+},
+&"water": {
+"hint": 17,
+"hint_string": "GaeaMaterial",
+"name": &"water",
+"type": 24,
+"usage": 4,
+"value": SubResource("Resource_8deqa")
+}
+})
+metadata/_custom_type_script = "uid://dae6umbqb872e"
