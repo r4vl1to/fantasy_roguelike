@@ -60,6 +60,10 @@ sources/0 = SubResource("TileSetAtlasSource_game")
 
 [node name="Game" type="Node2D" unique_id=1252093323]
 script = ExtResource("8_game")
+chunk_size = 32
+tile_size = 16
+vision_radius_tiles = 50.0
+vision_cone_angle_degrees = 140.0
 
 [node name="GaeaGenerator" type="Node" parent="." unique_id=1005867024]
 script = ExtResource("1_generator")

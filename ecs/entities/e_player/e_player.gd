@@ -9,4 +9,5 @@ func define_components() -> Array:
 		C_PlayerControl.new(),
 		C_MoveSpeed.new(),
 		C_MoveTarget.new(),
+		C_Vision.new(),
 	]

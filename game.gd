@@ -14,13 +14,34 @@ extends Node2D
 ##   - required active chunks  -> GaeaChunkStreamer
 ##   - chunk lifecycle / RAM / disk -> GaeaWorldManager
 ##   - entity simulation       -> GECS (S_ChunkStreaming, S_PlayerMovement, S_SpriteRender)
+##   - perception (vision cone) -> C_Vision on the player + S_Vision (which entities
+##     are seen) and VisionOverlay (the cone drawn by a shader; view only)
 
-const CHUNK_SIZE: int = 32
-const TILE_SIZE: int = 16
+@export_range(1, 1024, 1) var chunk_size: int = 32
+@export_range(1, 256, 1) var tile_size: int = 16
 const STREAM_RADIUS: int = 1
-const PERSISTENCE_ROOT: String = "user://world"
+@export var persistence_root: String = "user://world"
+
 const PLAYER_SPRITE: String = "res://assets/characters/ampholk_archer.png"
 const START_CHUNK: Vector2i = Vector2i.ZERO
+
+@export var debug_camera_chunk_streaming: bool = false
+
+@export_group("Vision")
+## Vision-cone area. Seeds the player's C_Vision at spawn so the area can be
+## tuned from the editor while testing; C_Vision remains the runtime source of
+## truth, and the shader only represents it.
+@export_range(1.0, 64.0, 0.5) var vision_radius_tiles: float = 10.0
+@export_range(1.0, 360.0, 1.0) var vision_cone_angle_degrees: float = 90.0
+## Mist that covers everything outside the cone. Translucent: it only reduces how
+## well the world reads outside the cone (raise alpha to hide more, up to 1.0).
+@export var vision_mist_color: Color = Color(0.10, 0.11, 0.16, 0.75)
+## Width in pixels of the soft transition at the cone's edge.
+@export var vision_edge_softness: float = 10.0
+## Always-clear radius (in tiles) around the player so its own sprite is fully
+## shown; 0 gives a strict cone with the character half in mist.
+@export_range(0.0, 8.0, 0.1) var vision_inner_radius_tiles: float = 1.0
+
 const StrategyCameraScript = preload("res://addons/strategy_camera/strategy_camera.gd")
 const PathOverlayScript = preload("res://ui/path_overlay.gd")
 const MoveConfirmPanelScript = preload("res://ui/move_confirm_panel.gd")
@@ -40,6 +61,7 @@ var terrain_materials: Dictionary = {}
 var click_system: S_ClickToMove
 var path_overlay: PathOverlayScript
 var move_panel: MoveConfirmPanelScript
+var vision_overlay: VisionOverlay
 var _camera_initialized: bool = false
 var _camera_chunk: Vector2i = Vector2i(2147483647, 2147483647)
 
@@ -51,6 +73,7 @@ func _ready() -> void:
 	_setup_streaming()
 	_spawn_player()
 	_setup_move_ui()
+	_setup_vision()
 	streamer.update_player_chunk(START_CHUNK)
 
 
@@ -61,6 +84,7 @@ func _process(delta: float) -> void:
 	_handle_move_confirmation()
 	_update_move_preview()
 	_update_visible_chunks_for_camera()
+	_update_vision_overlay(delta)
 
 
 # --- ECS world -----------------------------------------------------------------
@@ -75,22 +99,38 @@ func _setup_ecs() -> void:
 # --- Streaming stack -----------------------------------------------------------
 
 func _setup_world() -> void:
+	if generator.graph == null:
+		push_error("GaeaGenerator no tiene un grafo asignado en game.tscn.")
+		return
+	generator.graph.ensure_initialized()
+	if generator.settings == null:
+		generator.settings = GaeaGenerationSettings.new()
+	# Chunked streaming needs one stable seed across all tasks. Respect the seed
+	# saved in GaeaGenerator.settings; preview_seed is only for Gaea's editor preview.
+	generator.settings.random_seed_on_generate = false
+	# Isolate cached chunks by graph and generation settings so edits in Gaea
+	# cannot silently show terrain saved from an older configuration.
+	var graph_cache_name: String = generator.graph.resource_path.get_file().get_basename()
+	if graph_cache_name.is_empty():
+		graph_cache_name = "unsaved_graph"
+	var graph_signature: int = hash(generator.graph._node_data) ^ hash(generator.graph._connections) ^ hash(generator.settings.seed)
+	persistence_root = "%s/%s_%d" % [persistence_root, graph_cache_name, graph_signature]
 	var mapping: GaeaMappingRegistry = GaeaMappingRegistry.new()
 	mapping.build_from_graph(generator.graph)
 	terrain_materials = _build_materials()
 
 	database = WorldDatabase.new()
-	persistence = WorldPersistence.new(PERSISTENCE_ROOT)
+	persistence = WorldPersistence.new(persistence_root)
 
-	manager.setup(generator, mapping, database, persistence, CHUNK_SIZE)
+	manager.setup(generator, mapping, database, persistence, chunk_size)
 	manager.chunk_ready.connect(_on_chunk_ready)
 	manager.chunk_generation_failed.connect(_on_chunk_generation_failed)
 
-	renderer.tile_size = TILE_SIZE
+	renderer.tile_size = tile_size
 	renderer.terrain_materials = terrain_materials
 
 	entity_lifecycle = ChunkEntityLifecycle.new()
-	entity_lifecycle.configure(ecs_world, PERSISTENCE_ROOT)
+	entity_lifecycle.configure(ecs_world, persistence_root)
 	manager.configure_entity_lifecycle(entity_lifecycle)
 
 
@@ -103,7 +143,7 @@ func _setup_streaming() -> void:
 	streamer.chunks_to_unload.connect(_on_chunks_to_unload)
 
 	var streaming_system: S_ChunkStreaming = S_ChunkStreaming.new()
-	streaming_system.configure(streamer, CHUNK_SIZE)
+	streaming_system.configure(streamer, chunk_size)
 	ecs_world.add_system(streaming_system)
 
 
@@ -116,21 +156,29 @@ func _spawn_player() -> void:
 
 	var player_position: C_Position = player.get_component(C_Position) as C_Position
 	var current_chunk: C_CurrentChunk = player.get_component(C_CurrentChunk) as C_CurrentChunk
-	player_position.world_position = Vector2(ChunkMath.chunk_to_world_origin(START_CHUNK, CHUNK_SIZE))
+	player_position.world_position = Vector2(ChunkMath.chunk_to_world_origin(START_CHUNK, chunk_size))
 	current_chunk.coord = START_CHUNK
+
+	# Seed the vision area from the editor-tunable exports; C_Vision is the
+	# runtime source of truth from here on.
+	var vision: C_Vision = player.get_component(C_Vision) as C_Vision
+	if vision != null:
+		vision.radius_tiles = vision_radius_tiles
+		vision.cone_angle_degrees = vision_cone_angle_degrees
 
 	var sprite: AnimatedSprite2D = _create_player_sprite()
 	player.add_child(sprite)
-	sprite.global_position = (player_position.world_position + Vector2(0.5, 0.5)) * float(TILE_SIZE)
+	sprite.global_position = (player_position.world_position + Vector2(0.5, 0.5)) * float(tile_size)
 	player.add_component(C_Sprite_Render.new(sprite))
 
 	ecs_world.add_system(S_PlayerMovement.new())
 	var sprite_system: S_SpriteRender = S_SpriteRender.new()
-	sprite_system.tile_size = TILE_SIZE
+	sprite_system.tile_size = tile_size
 	ecs_world.add_system(sprite_system)
 	click_system = S_ClickToMove.new()
-	click_system.tile_size = TILE_SIZE
+	click_system.tile_size = tile_size
 	ecs_world.add_system(click_system)
+	ecs_world.add_system(S_Vision.new())
 
 	_update_camera()
 
@@ -164,7 +212,6 @@ func _setup_camera() -> void:
 	strategy_camera.position_smoothing_enabled = false
 	strategy_camera.allow_keyboard_controls = true
 	strategy_camera.allow_mouse_controls = true
-	camera_parent.remove_child(camera_node)
 	camera_parent.add_child(strategy_camera)
 	camera_parent.move_child(strategy_camera, camera_index)
 	camera_node.queue_free()
@@ -180,18 +227,20 @@ func _update_camera() -> void:
 	# Keep the initial camera centered on the player, but do not recenter it
 	# every frame: StrategyCamera must retain user pan/zoom after game start.
 	if not _camera_initialized:
-		camera.global_position = (player_position.world_position + Vector2(0.5, 0.5)) * float(TILE_SIZE)
+		camera.global_position = (player_position.world_position + Vector2(0.5, 0.5)) * float(tile_size)
 		_camera_initialized = true
 
 
 # --- Streaming callbacks -------------------------------------------------------
 
 func _update_visible_chunks_for_camera() -> void:
+	if not debug_camera_chunk_streaming:
+		return
 	if camera == null or manager == null or streamer == null:
 		return
 	var camera_chunk: Vector2i = ChunkMath.world_to_chunk(
-		Vector2i(floori(camera.global_position.x / float(TILE_SIZE)), floori(camera.global_position.y / float(TILE_SIZE))),
-		CHUNK_SIZE
+		Vector2i(floori(camera.global_position.x / float(tile_size)), floori(camera.global_position.y / float(tile_size))),
+		chunk_size
 	)
 	if camera_chunk == _camera_chunk:
 		return
@@ -253,18 +302,51 @@ func _on_chunk_generation_failed(coord: Vector2i) -> void:
 func _setup_move_ui() -> void:
 	path_overlay = PathOverlayScript.new()
 	path_overlay.name = "PathOverlay"
-	path_overlay.tile_size = TILE_SIZE
+	path_overlay.tile_size = tile_size
 	path_overlay.z_index = 5
 	add_child(path_overlay)
 
 	var ui_layer: CanvasLayer = CanvasLayer.new()
 	ui_layer.name = "UILayer"
+	# Above the vision overlay so the confirmation panel is never fogged.
+	ui_layer.layer = 10
 	add_child(ui_layer)
 	move_panel = MoveConfirmPanelScript.new()
 	move_panel.name = "MoveConfirmPanel"
 	ui_layer.add_child(move_panel)
 	move_panel.confirmed.connect(_confirm_move)
 	move_panel.cancelled.connect(_cancel_move)
+
+
+# --- Vision (cone of sight) ----------------------------------------------------
+
+func _setup_vision() -> void:
+	var vision_layer: CanvasLayer = CanvasLayer.new()
+	vision_layer.name = "VisionLayer"
+	# Above the world (layer 0) but below the UI.
+	vision_layer.layer = 1
+	add_child(vision_layer)
+
+	vision_overlay = VisionOverlay.new()
+	vision_overlay.name = "VisionOverlay"
+	vision_overlay.tile_size = float(tile_size)
+	vision_overlay.camera = camera
+	vision_overlay.mist_color = vision_mist_color
+	vision_overlay.edge_softness = vision_edge_softness
+	vision_overlay.inner_radius_tiles = vision_inner_radius_tiles
+	vision_layer.add_child(vision_overlay)
+
+
+## Pushes the player's current cone to the overlay shader. The overlay only draws
+## the visual; which entities are perceived is decided by S_Vision.
+func _update_vision_overlay(delta: float) -> void:
+	if vision_overlay == null or player == null:
+		return
+	var vision: C_Vision = player.get_component(C_Vision) as C_Vision
+	var player_position: C_Position = player.get_component(C_Position) as C_Position
+	if vision == null or player_position == null:
+		return
+	vision_overlay.update_cone(vision, player_position.world_position, delta)
 
 
 func _handle_move_confirmation() -> void:

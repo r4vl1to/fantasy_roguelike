@@ -21,7 +21,7 @@ func query() -> QueryBuilder:
 	return q.with_all([C_Position, C_PlayerControl, C_MoveSpeed, C_MoveTarget]).iterate([C_Position, C_MoveSpeed, C_MoveTarget])
 
 
-func process(_entities: Array[Entity], components: Array, delta: float) -> void:
+func process(entities: Array[Entity], components: Array, delta: float) -> void:
 	if components.size() < 3:
 		return
 	_step_cooldown = maxf(0.0, _step_cooldown - delta)
@@ -29,23 +29,38 @@ func process(_entities: Array[Entity], components: Array, delta: float) -> void:
 	var speeds: Array = components[1]
 	var targets: Array = components[2]
 	var direction: Vector2i = _read_direction()
+	var ctrl_held: bool = Input.is_key_pressed(KEY_CTRL)
+	var facing_input: Vector2 = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	for index: int in range(positions.size()):
 		var position: C_Position = positions[index] as C_Position
 		var move_speed: C_MoveSpeed = speeds[index] as C_MoveSpeed
 		var move_target: C_MoveTarget = targets[index] as C_MoveTarget
 		if position == null or move_speed == null or move_target == null:
 			continue
+		var vision: C_Vision = entities[index].get_component(C_Vision) as C_Vision
 		var current: Vector2i = _tile_of(position)
 		if direction != Vector2i.ZERO:
 			# Keyboard: one tile per step, repeating while a key is held.
 			# Any keyboard input cancels a pending click destination.
 			move_target.active = false
 			move_target.pending = false
+			# Track travel independently from aim. Holding Ctrl allows backpedaling;
+			# otherwise facing follows movement, and releasing Ctrl restores it.
+			if vision != null:
+				vision.movement_facing = Vector2(direction).normalized()
+				if not ctrl_held:
+					vision.facing = vision.movement_facing
 			if _step_cooldown > 0.0:
 				continue
 			position.world_position = Vector2(current + direction)
 			_step_cooldown = 1.0 / maxf(move_speed.speed, 0.001)
 			continue
+		if vision != null and not ctrl_held:
+			vision.facing = vision.movement_facing
+		if direction == Vector2i.ZERO and vision != null and not ctrl_held:
+			if facing_input.length_squared() > 0.000001:
+				vision.movement_facing = facing_input.normalized()
+				vision.facing = vision.movement_facing
 		if not move_target.active:
 			continue
 		if current == move_target.target:
@@ -53,8 +68,21 @@ func process(_entities: Array[Entity], components: Array, delta: float) -> void:
 			continue
 		if _step_cooldown > 0.0:
 			continue
-		position.world_position = Vector2(step_toward(current, move_target.target))
+		var next: Vector2i = step_toward(current, move_target.target)
+		_position_and_face(position, vision, next)
 		_step_cooldown = 1.0 / maxf(move_speed.speed, 0.001)
+
+
+## Moves the entity to `tile` and turns its vision toward the step direction.
+func _position_and_face(position: C_Position, vision: C_Vision, tile: Vector2i) -> void:
+	var ctrl_held: bool = Input.is_key_pressed(KEY_CTRL)
+	var direction: Vector2 = Vector2(tile) - position.world_position
+	if vision != null and direction.length_squared() > 0.000001:
+		vision.movement_facing = direction.normalized()
+		if not ctrl_held:
+			vision.facing = vision.movement_facing
+	position.world_position = Vector2(tile)
+
 
 
 func _read_direction() -> Vector2i:
