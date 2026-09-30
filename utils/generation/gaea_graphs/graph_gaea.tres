@@ -53,9 +53,9 @@ _node_data = Dictionary[int, Dictionary]({
 },
 1: {
 &"arguments": {
-&"frequency": 0.01,
-&"lacunarity": 75.0,
-&"octaves": 5.0
+&"frequency": 0.05,
+&"lacunarity": 0.01,
+&"octaves": 1.0
 },
 &"enums": [1],
 &"position": Vector2(-80, 600),

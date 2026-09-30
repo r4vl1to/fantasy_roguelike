@@ -48,8 +48,8 @@ var _last_mouse_position: Vector2 = Vector2.ZERO
 func _ready() -> void:
 	_ensure_input_actions()
 	target_zoom = zoom
-	_on_resolution_change()
 	get_viewport().size_changed.connect(_on_resolution_change)
+	call_deferred("_on_resolution_change")
 
 func _ensure_input_actions() -> void:
 	for action_name: String in DEFAULT_KEY_BINDINGS:
@@ -70,8 +70,12 @@ func _ensure_input_actions() -> void:
 
 
 func _on_resolution_change() -> void:
-	camera_TL = -get_viewport_rect().size / 2
-	camera_BR = get_viewport_rect().size / 2
+	if not is_inside_tree():
+		return
+	var viewport: Viewport = get_viewport()
+	var viewport_size: Vector2 = viewport.get_visible_rect().size
+	camera_TL = -viewport_size / 2.0
+	camera_BR = viewport_size / 2.0
 
 func _input(event: InputEvent) -> void:
 	if not allow_mouse_controls:

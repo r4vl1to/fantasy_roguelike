@@ -6,7 +6,6 @@
 [ext_resource type="Script" uid="uid://rfsrtakmflly" path="res://addons/gaea/runtime/scene_nodes/threading/task_pool.gd" id="4_4d7sh"]
 [ext_resource type="Script" uid="uid://b4x16tyyfihmb" path="res://addons/gaea/runtime/scene_nodes/renderers/tilemap_renderer.gd" id="5_ir8iy"]
 [ext_resource type="Texture2D" uid="uid://cnrqjqddqe2cb" path="res://assets/tileset/spritesheet.png" id="6_hqns4"]
-[ext_resource type="PackedScene" uid="uid://c5ou3pfm37uk1" path="res://utils/generation/tests/test.tscn" id="7_d21ai"]
 
 [sub_resource type="Resource" id="Resource_l12od"]
 script = ExtResource("3_rj586")
@@ -73,5 +72,3 @@ metadata/_custom_type_script = "uid://b4x16tyyfihmb"
 
 [node name="TileMapLayer" type="TileMapLayer" parent="." unique_id=362157976]
 tile_set = SubResource("TileSet_l12od")
-
-[node name="test" parent="." unique_id=106514020 instance=ExtResource("7_d21ai")]

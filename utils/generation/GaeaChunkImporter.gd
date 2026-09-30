@@ -15,6 +15,11 @@ func import_grid(
 	chunk.initialize(chunk_size)
 
 	var layer_map: GaeaValue.Map = grid.get_layer(0)
+	if layer_map == null:
+		push_error("Gaea grid has no output layer 0 for chunk %s." % chunk_coord)
+		return chunk
+	var chunk_origin: Vector2i = ChunkMath.chunk_to_world_origin(chunk_coord, chunk_size)
+	var imported_cell_count: int = 0
 
 	for cell in layer_map.get_cells():
 		var world_position := Vector2i(
@@ -22,12 +27,7 @@ func import_grid(
 			cell.y
 		)
 
-		var chunk_origin := ChunkMath.chunk_to_world_origin(
-			chunk_coord,
-			chunk_size
-		)
-
-		var local := world_position - chunk_origin
+		var local: Vector2i = world_position - chunk_origin
 
 		if not chunk.contains_local(local):
 			push_error(
@@ -44,6 +44,7 @@ func import_grid(
 		var terrain_id: int = mapping.terrain_id_from_material(material)
 		var index: int = ChunkMath.local_to_index(local, chunk_size)
 		chunk.terrain[index] = terrain_id
+		imported_cell_count += 1
 		if material is TileMapGaeaMaterial:
 			var tile_material: TileMapGaeaMaterial = material as TileMapGaeaMaterial
 			chunk.metadata["tile_%d" % index] = {
@@ -55,5 +56,7 @@ func import_grid(
 				"terrain": tile_material.terrain,
 			}
 
+	if imported_cell_count == 0:
+		push_warning("Gaea graph produced no mapped cells for chunk %s." % chunk_coord)
 
 	return chunk

@@ -35,6 +35,9 @@ func set_required_chunks(coords: Dictionary) -> void:
 
 
 func generate_chunk(chunk_coord: Vector2i) -> GaeaTask:
+	if _generator.graph == null:
+		push_error("Cannot generate chunk: GaeaGenerator has no graph assigned.")
+		return null
 	var world_rect := ChunkMath.chunk_to_world_rect(
 		chunk_coord,
 		_chunk_size
@@ -52,6 +55,11 @@ func generate_chunk(chunk_coord: Vector2i) -> GaeaTask:
 			1
 		)
 	)
+	# Use the serialized generator settings for all chunk requests. Randomizing
+	# per call would make chunks use different seeds, unlike one coherent world.
+	if _generator.settings == null:
+		_generator.settings = GaeaGenerationSettings.new()
+	_generator.settings.random_seed_on_generate = false
 
 	print("[WorldGenerator] Generate ", chunk_coord, " | area: ", area)
 
