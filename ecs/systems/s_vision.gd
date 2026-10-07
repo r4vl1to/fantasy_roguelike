@@ -60,12 +60,12 @@ func _is_perceived(
 ## True when `target_tile` lies inside the cone from `source_tile`. Positions are
 ## in tile space.
 func _is_inside_cone(target_tile: Vector2, source_tile: Vector2, vision: C_Vision) -> bool:
-	var cone_origin: Vector2 = source_tile + vision.facing.normalized() * 0.75
+	var cone_origin: Vector2 = source_tile + vision.facing.normalized() * 0.5
 	var to_target: Vector2 = target_tile - cone_origin
 	var distance: float = to_target.length()
 	if distance > vision.radius_tiles:
 		return false
-	if (target_tile - source_tile).length() <= 2.5:
+	if (target_tile - source_tile).length() <= 0.75:
 		return true
 	if distance < 0.0001:
 		return true

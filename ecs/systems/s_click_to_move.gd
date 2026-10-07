@@ -40,8 +40,14 @@ func process(entities: Array[Entity], components: Array, _delta: float) -> void:
 		var aim_positions: Array = components[1] if components.size() > 1 else []
 		for aim_index: int in range(aim_targets.size()):
 			var aim_position: C_Position = aim_positions[aim_index] as C_Position
-			if aim_position != null:
-				_aim(entities[aim_index].get_component(C_Vision) as C_Vision, aim_position, aim_tile)
+			if aim_position == null:
+				continue
+			var vision: C_Vision = entities[aim_index].get_component(C_Vision) as C_Vision
+			_aim(vision, aim_position, aim_tile)
+			# The aim becomes the idle facing, so releasing Ctrl keeps the
+			# cone pointing in the newly selected direction.
+			if vision != null:
+				vision.movement_facing = vision.facing
 		return
 	if not clicked:
 		return

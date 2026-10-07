@@ -6,24 +6,31 @@
 
 [sub_resource type="Resource" id="Resource_bx6as"]
 script = ExtResource("1_sq17b")
+atlas_coord = Vector2i(1, 0)
 preview_color = Color(0.718398, 0.71740836, 0.81212604, 1)
 metadata/_custom_type_script = "uid://e45byecr4gi6"
 
 [sub_resource type="Resource" id="Resource_maqtv"]
 script = ExtResource("1_sq17b")
-atlas_coord = Vector2i(0, 1)
+atlas_coord = Vector2i(1, 1)
 preview_color = Color(0.966841, 0.3368023, 0.15267277, 1)
+metadata/_custom_type_script = "uid://e45byecr4gi6"
+
+[sub_resource type="Resource" id="Resource_sq17b"]
+script = ExtResource("1_sq17b")
+atlas_coord = Vector2i(1, 2)
+preview_color = Color(0.3472357, 0.844826, 0.3956686, 1)
 metadata/_custom_type_script = "uid://e45byecr4gi6"
 
 [sub_resource type="Resource" id="Resource_jiytp"]
 script = ExtResource("1_sq17b")
-atlas_coord = Vector2i(0, 3)
+atlas_coord = Vector2i(1, 3)
 preview_color = Color(0.22491094, 0.15811807, 0.25704274, 1)
 metadata/_custom_type_script = "uid://e45byecr4gi6"
 
 [sub_resource type="Resource" id="Resource_ev2h5"]
 script = ExtResource("1_sq17b")
-atlas_coord = Vector2i(0, 4)
+atlas_coord = Vector2i(1, 4)
 preview_color = Color(0.3272329, 0.7955192, 0.8283139, 1)
 metadata/_custom_type_script = "uid://e45byecr4gi6"
 
@@ -43,7 +50,7 @@ preview_seed = 3226665727
 preview_world_size = Vector3i(64, 64, 1)
 preview_chunk_size = Vector3i(64, 64, 1)
 save_version = 5
-_connections = Array[StringName]([&"8-0-2-1", &"9-0-3-1", &"10-0-4-1", &"11-0-5-1", &"12-0-6-1", &"2-0-13-0", &"14-0-0-0", &"1-0-2-0", &"1-0-3-0", &"1-0-4-0", &"1-0-5-0", &"1-0-6-0", &"4-0-13-3", &"3-0-13-2", &"6-0-14-2", &"5-0-14-1", &"13-0-14-0"])
+_connections = Array[StringName]([&"8-0-2-1", &"9-0-3-1", &"10-0-4-1", &"11-0-5-1", &"12-0-6-1", &"2-0-13-0", &"14-0-0-0", &"1-0-3-0", &"1-0-4-0", &"1-0-5-0", &"1-0-6-0", &"13-0-14-0", &"1-0-2-0", &"3-0-13-1", &"4-0-13-2", &"5-0-13-3", &"6-0-14-1", &"1-0-18-0", &"18-0-16-0", &"16-0-14-2", &"15-0-16-1"])
 _node_data = Dictionary[int, Dictionary]({
 0: {
 &"position": Vector2(1120, 1120),
@@ -53,9 +60,9 @@ _node_data = Dictionary[int, Dictionary]({
 },
 1: {
 &"arguments": {
-&"frequency": 0.05,
-&"lacunarity": 0.01,
-&"octaves": 1.0
+&"frequency": 0.03,
+&"lacunarity": 3.0,
+&"octaves": 2.0
 },
 &"enums": [1],
 &"position": Vector2(-80, 600),
@@ -102,7 +109,7 @@ _node_data = Dictionary[int, Dictionary]({
 5: {
 &"arguments": {
 &"range": {
-"max": 0.75,
+"max": 0.8,
 "min": 0.6
 }
 },
@@ -115,7 +122,7 @@ _node_data = Dictionary[int, Dictionary]({
 &"arguments": {
 &"range": {
 "max": 1.0,
-"min": 0.75
+"min": 0.8
 }
 },
 &"position": Vector2(520, 1220),
@@ -177,10 +184,43 @@ _node_data = Dictionary[int, Dictionary]({
 },
 14: {
 &"enums": [0],
-&"position": Vector2(900, 960),
+&"position": Vector2(900, 980),
 &"salt": 1423860103,
 &"type": 0,
 &"uid": "uid://d2f6bjkxcn7jl"
+},
+15: {
+&"arguments": {
+&"name": "mushroom"
+},
+&"position": Vector2(280, 1600),
+&"salt": 1821875535,
+&"type": 0,
+&"uid": "uid://cqs1w714pbfql"
+},
+16: {
+&"arguments": {
+&"amount": 4.0,
+&"material": null,
+&"reference": Object(RefCounted,"script":null)
+
+},
+&"position": Vector2(540, 1500),
+&"salt": 1358846108,
+&"type": 0,
+&"uid": "uid://bjmyuomcmtwq6"
+},
+18: {
+&"arguments": {
+&"range": {
+"max": 0.6,
+"min": 0.2
+}
+},
+&"position": Vector2(-40, 1600),
+&"salt": 482815638,
+&"type": 0,
+&"uid": "uid://d3ahx5mfke6wg"
 }
 })
 _parameters = Dictionary[StringName, Variant]({
@@ -199,6 +239,14 @@ _parameters = Dictionary[StringName, Variant]({
 "type": 24,
 "usage": 4,
 "value": SubResource("Resource_maqtv")
+},
+&"mushroom": {
+"hint": 17,
+"hint_string": "GaeaMaterial",
+"name": &"mushroom",
+"type": 24,
+"usage": 4,
+"value": SubResource("Resource_sq17b")
 },
 &"sand": {
 "hint": 17,

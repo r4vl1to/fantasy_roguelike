@@ -20,6 +20,7 @@ extends Node2D
 @export_range(1, 1024, 1) var chunk_size: int = 32
 @export_range(1, 256, 1) var tile_size: int = 16
 const STREAM_RADIUS: int = 1
+@export_range(1, 9, 1) var chunk_requests_per_frame: int = 1
 @export var persistence_root: String = "user://world"
 
 const PLAYER_SPRITE: String = "res://assets/characters/ampholk_archer.png"
@@ -38,8 +39,7 @@ const START_CHUNK: Vector2i = Vector2i.ZERO
 @export var vision_mist_color: Color = Color(0.10, 0.11, 0.16, 0.75)
 ## Width in pixels of the soft transition at the cone's edge.
 @export var vision_edge_softness: float = 10.0
-## Always-clear radius (in tiles) around the player so its own sprite is fully
-## shown; 0 gives a strict cone with the character half in mist.
+## Radius in tiles kept clear around the player independently of the directional cone.
 @export_range(0.0, 8.0, 0.1) var vision_inner_radius_tiles: float = 1.0
 
 const StrategyCameraScript = preload("res://addons/strategy_camera/strategy_camera.gd")
@@ -64,6 +64,8 @@ var move_panel: MoveConfirmPanelScript
 var vision_overlay: VisionOverlay
 var _camera_initialized: bool = false
 var _camera_chunk: Vector2i = Vector2i(2147483647, 2147483647)
+var _chunk_request_queue: Array[Vector2i] = []
+var _queued_chunk_requests: Dictionary = {}
 
 
 func _ready() -> void:
@@ -80,6 +82,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if ecs_world != null:
 		ECS.process(delta)
+	_process_chunk_request_queue(chunk_requests_per_frame)
 	_update_camera()
 	_handle_move_confirmation()
 	_update_move_preview()
@@ -122,8 +125,10 @@ func _setup_world() -> void:
 	database = WorldDatabase.new()
 	persistence = WorldPersistence.new(persistence_root)
 
+	manager.terrain_materials = terrain_materials
 	manager.setup(generator, mapping, database, persistence, chunk_size)
 	manager.chunk_ready.connect(_on_chunk_ready)
+	manager.chunk_changed.connect(_on_chunk_changed)
 	manager.chunk_generation_failed.connect(_on_chunk_generation_failed)
 
 	renderer.tile_size = tile_size
@@ -257,13 +262,35 @@ func _update_visible_chunks_for_camera() -> void:
 		combined_coords.append(coord_variant as Vector2i)
 	manager.set_required_chunks(combined_coords)
 	for coord: Vector2i in combined_coords:
-		manager.request_chunk(coord)
+		if not manager.database.has_chunk(coord) and not manager.persistence.has_chunk(coord):
+			_enqueue_chunk_request(coord)
 
 
 func _on_chunks_to_load(chunks: Array[Vector2i]) -> void:
 	manager.set_required_chunks(streamer.required_chunks.keys())
+	for queued_coord: Vector2i in _chunk_request_queue:
+		if not streamer.is_required(queued_coord):
+			_queued_chunk_requests.erase(queued_coord)
+	_chunk_request_queue = _chunk_request_queue.filter(func(coord: Vector2i) -> bool: return streamer.is_required(coord))
 	for coord: Vector2i in chunks:
-		manager.request_chunk(coord)
+		_enqueue_chunk_request(coord)
+
+
+func _enqueue_chunk_request(coord: Vector2i) -> void:
+	if _queued_chunk_requests.has(coord):
+		return
+	_queued_chunk_requests[coord] = true
+	_chunk_request_queue.append(coord)
+
+
+func _process_chunk_request_queue(requests_per_frame: int) -> void:
+	var processed: int = 0
+	while processed < requests_per_frame and not _chunk_request_queue.is_empty():
+		var coord: Vector2i = _chunk_request_queue.pop_front()
+		_queued_chunk_requests.erase(coord)
+		if manager.is_required_chunk(coord):
+			manager.request_chunk(coord)
+		processed += 1
 
 
 func _on_chunks_to_unload(chunks: Array[Vector2i]) -> void:
@@ -289,6 +316,12 @@ func _on_chunk_ready(chunk: ChunkData) -> void:
 		# A generation can finish after its coordinate stopped being required.
 		# Evict it so abandoned work never inflates RAM or the rendered set.
 		manager.unload_chunk(chunk.coord)
+		return
+	renderer.render_chunk(chunk)
+
+
+func _on_chunk_changed(chunk: ChunkData) -> void:
+	if chunk == null or renderer == null or not renderer.is_rendered(chunk.coord):
 		return
 	renderer.render_chunk(chunk)
 
@@ -430,6 +463,8 @@ func _terrain_name(terrain_id: int) -> String:
 			return "Stone"
 		TerrainId.WATER:
 			return "Water"
+		TerrainId.MUSHROOM:
+			return "Mushroom"
 	return "Desconocido"
 
 
@@ -445,6 +480,8 @@ func _terrain_color(terrain_id: int) -> Color:
 			return Color(0.62, 0.62, 0.68)
 		TerrainId.WATER:
 			return Color(0.3, 0.55, 0.9)
+		TerrainId.MUSHROOM:
+			return Color(0.85, 0.25, 0.4)
 	return Color(0.9, 0.3, 0.3)
 
 
@@ -458,6 +495,7 @@ func _build_materials() -> Dictionary:
 		TerrainId.SAND,
 		TerrainId.STONE,
 		TerrainId.WATER,
+		TerrainId.MUSHROOM,
 	]:
 		var gaea_material: GaeaMaterial = generator.graph.get(_parameter_name(terrain_id)) as GaeaMaterial
 		if gaea_material == null or not (gaea_material is TileMapGaeaMaterial):
@@ -487,4 +525,6 @@ func _parameter_name(terrain_id: int) -> StringName:
 			return &"stone"
 		TerrainId.WATER:
 			return &"water"
+		TerrainId.MUSHROOM:
+			return &"mushroom"
 	return &""

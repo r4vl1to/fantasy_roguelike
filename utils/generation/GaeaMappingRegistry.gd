@@ -12,6 +12,16 @@ func build_from_graph(graph: GaeaGraph) -> void:
 	_register(graph.get(&"sand"), TerrainId.SAND)
 	_register(graph.get(&"stone"), TerrainId.STONE)
 	_register(graph.get(&"water"), TerrainId.WATER)
+	_register(graph.get(&"mushroom"), TerrainId.MUSHROOM)
+
+
+
+func materials_for_terrain(terrain_id: int) -> Array[GaeaMaterial]:
+	var result: Array[GaeaMaterial] = []
+	for material: GaeaMaterial in _material_to_terrain.keys():
+		if int(_material_to_terrain[material]) == terrain_id:
+			result.append(material)
+	return result
 
 
 func _register(material: GaeaMaterial, terrain_id: int) -> void:

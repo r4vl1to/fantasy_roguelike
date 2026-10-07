@@ -8,6 +8,7 @@
 [ext_resource type="Script" uid="uid://bgk1wayjhm07j" path="res://utils/generation/GaeaWorldManager.gd" id="4_pkg7o"]
 [ext_resource type="Texture2D" uid="uid://cnrqjqddqe2cb" path="res://assets/tileset/spritesheet.png" id="7_gbfbk"]
 [ext_resource type="Script" uid="uid://d4f0u6hp4j5rj" path="res://utils/generation/GaeaChunkRenderer.gd" id="9_chunk_renderer"]
+[ext_resource type="Texture2D" uid="uid://hg34d5ici0g4" path="res://assets/tileset/flora_spritesheet.png" id="9_ioo17"]
 
 [sub_resource type="Resource" id="Resource_2b5t2"]
 script = ExtResource("4_gbfbk")
@@ -54,8 +55,24 @@ texture = ExtResource("7_gbfbk")
 0:4/0 = 0
 0:5/0 = 0
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ic0uy"]
+texture = ExtResource("9_ioo17")
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+0:1/0 = 0
+1:1/0 = 0
+2:1/0 = 0
+0:2/0 = 0
+1:2/0 = 0
+2:2/0 = 0
+0:3/0 = 0
+1:3/0 = 0
+2:3/0 = 0
+
 [sub_resource type="TileSet" id="TileSet_ic0uy"]
 sources/0 = SubResource("TileSetAtlasSource_wse8f")
+sources/1 = SubResource("TileSetAtlasSource_ic0uy")
 
 [node name="world" type="Node" unique_id=1402795195]
 

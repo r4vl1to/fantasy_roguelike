@@ -31,6 +31,7 @@ func _ready() -> void:
 	set_process_mode(Node.PROCESS_MODE_ALWAYS)
 	var mapping: GaeaMappingRegistry = GaeaMappingRegistry.new()
 	mapping.build_from_graph(generator.graph)
+	manager.variant_source_override = renderer.shared_tile_set.get_source(0) as TileSetAtlasSource
 	_build_materials(mapping)
 	database = WorldDatabase.new()
 	_clear_test_data()
@@ -159,7 +160,7 @@ func _entity_path(coord: Vector2i) -> String:
 
 
 func _build_materials(_mapping: GaeaMappingRegistry) -> void:
-	for terrain_id: int in [TerrainId.DIRT, TerrainId.GRASS, TerrainId.SAND, TerrainId.STONE, TerrainId.WATER]:
+	for terrain_id: int in [TerrainId.DIRT, TerrainId.GRASS, TerrainId.SAND, TerrainId.STONE, TerrainId.WATER, TerrainId.MUSHROOM]:
 		var material: GaeaMaterial = generator.graph.get(_parameter_name(terrain_id)) as GaeaMaterial
 		if material == null or not (material is TileMapGaeaMaterial):
 			push_error("Missing TileMapGaeaMaterial for TerrainId %d" % terrain_id)
@@ -176,6 +177,7 @@ func _parameter_name(terrain_id: int) -> StringName:
 		TerrainId.SAND: return &"sand"
 		TerrainId.STONE: return &"stone"
 		TerrainId.WATER: return &"water"
+		TerrainId.MUSHROOM: return &"mushroom"
 	return &""
 
 

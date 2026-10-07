@@ -9,6 +9,7 @@ var _generator: GaeaGenerator
 var _mapping: GaeaMappingRegistry
 var _importer: GaeaChunkImporter
 var _chunk_size: int
+var _variant_source: TileSetAtlasSource
 var _required_chunks: Dictionary = {}
 var _required_chunks_configured: bool = false
 var _generation_tasks: Array[GaeaTask] = []
@@ -17,11 +18,13 @@ var _generation_tasks: Array[GaeaTask] = []
 func _init(
 	generator: GaeaGenerator,
 	mapping: GaeaMappingRegistry,
-	chunk_size: int
+	chunk_size: int,
+	variant_source: TileSetAtlasSource = null
 ) -> void:
 	_generator = generator
 	_mapping = mapping
 	_chunk_size = chunk_size
+	_variant_source = variant_source
 	_importer = GaeaChunkImporter.new()
 
 	_generator.generation_finished.connect(
@@ -91,7 +94,8 @@ func _on_generation_finished(grid: GaeaGrid) -> void:
 		grid,
 		chunk_coord,
 		_chunk_size,
-		_mapping
+		_mapping,
+		_variant_source
 	)
 
 

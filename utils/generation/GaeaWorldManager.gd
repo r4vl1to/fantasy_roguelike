@@ -5,6 +5,7 @@ extends Node
 signal chunk_ready(chunk: ChunkData)
 signal chunk_generation_started(coord: Vector2i)
 signal chunk_generation_failed(coord: Vector2i)
+signal chunk_changed(chunk: ChunkData)
 
 
 var gaea_generator: GaeaGenerator
@@ -23,6 +24,9 @@ var _pending_chunks: Dictionary = {}
 var _required_chunks: Dictionary = {}
 var _required_chunks_configured: bool = false
 var _generation_tasks: Dictionary = {}
+var variant_source_override: TileSetAtlasSource
+var terrain_materials: Dictionary = {}
+var _variant_metadata_checked_chunks: Dictionary = {}
 
 
 func setup(
@@ -42,7 +46,8 @@ func setup(
 	world_generator = GaeaWorldGenerator.new(
 		gaea_generator,
 		mapping,
-		chunk_size
+		chunk_size,
+		_get_variant_source()
 	)
 
 	if not world_generator.chunk_generated.is_connected(
@@ -55,9 +60,67 @@ func setup(
 		world_generator.chunk_generation_discarded.connect(_on_chunk_generation_discarded)
 
 
+func _material_data_for_terrain(terrain_id: int) -> Dictionary:
+	if not terrain_materials.is_empty() and terrain_materials.has(terrain_id):
+		return (terrain_materials[terrain_id] as Dictionary).duplicate()
+	if mapping == null:
+		return {}
+	for material: GaeaMaterial in mapping.materials_for_terrain(terrain_id):
+		if material is TileMapGaeaMaterial:
+			var tile: TileMapGaeaMaterial = material as TileMapGaeaMaterial
+			return {"type": tile.type, "source_id": tile.source_id, "atlas_coords": tile.atlas_coord, "alternative_tile": tile.alternative_tile, "terrain_set": tile.terrain_set, "terrain": tile.terrain}
+	return {}
+
+
+func _ensure_visual_variant_metadata(chunk: ChunkData) -> bool:
+	if chunk == null or mapping == null or _variant_metadata_checked_chunks.has(chunk.coord):
+		return false
+	var source: TileSetAtlasSource = _get_variant_source()
+	if source == null:
+		return false
+	var changed: bool = false
+	var origin: Vector2i = ChunkMath.chunk_to_world_origin(chunk.coord, chunk.size)
+	for index: int in range(chunk.terrain.size()):
+		var terrain_id: int = chunk.terrain[index]
+		var base_data: Dictionary = _material_data_for_terrain(terrain_id)
+		if base_data.is_empty() or int(base_data["type"]) != TileMapGaeaMaterial.Type.SINGLE_CELL or int(base_data["source_id"]) != 0:
+			continue
+		var key: String = "tile_%d" % index
+		var existing: Variant = chunk.metadata.get(key, null)
+		var base_coords: Vector2i = base_data["atlas_coords"] as Vector2i
+		var local: Vector2i = ChunkMath.index_to_local(index, chunk.size)
+		var world_position: Vector2i = origin + local
+		var expected_coords: Vector2i = GaeaChunkImporter.choose_visual_variant(source, base_coords, world_position, terrain_id)
+		var cell_data: Dictionary = base_data
+		if existing is Dictionary:
+			cell_data = existing.duplicate()
+		if cell_data.get("atlas_coords", base_coords) != expected_coords:
+			cell_data["atlas_coords"] = expected_coords
+			changed = true
+		if not existing is Dictionary:
+			changed = true
+		chunk.metadata[key] = cell_data
+	_variant_metadata_checked_chunks[chunk.coord] = true
+	return changed
+
+
 func _on_chunk_generation_discarded(coord: Vector2i) -> void:
 	_pending_chunks.erase(coord)
 	_generation_tasks.erase(coord)
+
+
+func _get_variant_source() -> TileSetAtlasSource:
+	if variant_source_override != null:
+		return variant_source_override
+	if gaea_generator == null or gaea_generator.get_parent() == null:
+		return null
+	var renderer: GaeaChunkRenderer = gaea_generator.get_parent().get_node_or_null("GaeaChunkRenderer") as GaeaChunkRenderer
+	if renderer == null or renderer.shared_tile_set == null:
+		return null
+	if not renderer.shared_tile_set.has_source(0):
+		return null
+	var source: TileSetSource = renderer.shared_tile_set.get_source(0)
+	return source as TileSetAtlasSource
 
 
 func configure_entity_lifecycle(p_lifecycle: ChunkEntityLifecycle) -> void:
@@ -91,6 +154,8 @@ func request_chunk(coord: Vector2i) -> void:
 		var chunk_from_ram: ChunkData = database.get_chunk(coord)
 
 		if chunk_from_ram != null:
+			if _ensure_visual_variant_metadata(chunk_from_ram):
+				persistence.save_chunk(chunk_from_ram)
 			if entity_lifecycle != null:
 				entity_lifecycle.restore_chunk_entities(coord)
 			chunk_ready.emit(chunk_from_ram)
@@ -106,6 +171,8 @@ func request_chunk(coord: Vector2i) -> void:
 		var chunk_from_disk: ChunkData = persistence.load_chunk(coord)
 
 		if chunk_from_disk != null:
+			if _ensure_visual_variant_metadata(chunk_from_disk):
+				persistence.save_chunk(chunk_from_disk)
 			database.store_chunk(chunk_from_disk)
 			if entity_lifecycle != null:
 				entity_lifecycle.restore_chunk_entities(coord)
@@ -166,6 +233,8 @@ func _on_chunk_generated(chunk: ChunkData) -> void:
 		print("[WorldManager] Discarded obsolete generated chunk ", chunk_coord)
 		return
 
+	if _ensure_visual_variant_metadata(chunk):
+		print("[WorldManager] Applied visual variant metadata to generated chunk ", chunk_coord)
 	database.store_chunk(chunk)
 	var saved: bool = persistence.save_chunk(chunk)
 	if not saved:
@@ -243,3 +312,39 @@ func get_terrain_at(world_tile: Vector2i) -> int:
 		return -1
 
 	return chunk.terrain_get(local)
+
+
+## Changes one world cell's terrain and persists the containing chunk.
+## Returns false if the cell's chunk is not available in RAM or on disk.
+func set_terrain_at(world_tile: Vector2i, terrain_id: int) -> bool:
+	if chunk_size <= 0 or database == null or persistence == null:
+		return false
+	if terrain_id < TerrainId.DIRT or terrain_id > TerrainId.MUSHROOM:
+		return false
+	var coord: Vector2i = ChunkMath.world_to_chunk(world_tile, chunk_size)
+	var chunk: ChunkData = null
+	if database.has_chunk(coord):
+		chunk = database.get_chunk(coord)
+	elif persistence.has_chunk(coord):
+		chunk = persistence.load_chunk(coord)
+		if chunk != null:
+			database.store_chunk(chunk)
+	if chunk == null:
+		return false
+	var local: Vector2i = ChunkMath.world_to_local(world_tile, chunk_size)
+	if not chunk.contains_local(local):
+		return false
+	var cell_index: int = ChunkMath.local_to_index(local, chunk_size)
+	var previous_terrain: int = chunk.terrain[cell_index]
+	var had_tile_metadata: bool = chunk.metadata.has("tile_%d" % cell_index)
+	var previous_tile_metadata: Variant = chunk.metadata.get("tile_%d" % cell_index)
+	chunk.terrain_set(local, terrain_id)
+	chunk.metadata.erase("tile_%d" % cell_index)
+	if not persistence.save_chunk(chunk):
+		chunk.terrain_set(local, previous_terrain)
+		if had_tile_metadata:
+			chunk.metadata["tile_%d" % cell_index] = previous_tile_metadata
+		push_error("Failed to persist terrain change at %s." % world_tile)
+		return false
+	chunk_changed.emit(chunk)
+	return true

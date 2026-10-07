@@ -25,18 +25,17 @@ uniform float radius = 160.0;
 uniform vec2 facing = vec2(1.0, 0.0);
 uniform float half_angle = 0.785398;
 uniform float softness = 10.0;
-// Clear radius around the player, independent of the directional wedge, to ensure
-// the entire sprite remains visible.
-uniform float inner_radius = 16.0;
-uniform float origin_offset = -12.0;
-uniform float body_clear_radius = 24.0;
+// Inner Radius: area around the player kept fully clear independent of the wedge.
+uniform float inner_radius = 32.0;
+uniform float rear_edge_offset = 8.0;
+
+
 uniform vec4 mist_color : source_color = vec4(0.10, 0.11, 0.16, 0.75);
 
 void fragment() {
 	vec2 player_delta = UV * resolution - center;
-	// Offset the cone apex behind the player's body so the cone contains
-	// the entire player and points outward from their face.
-	vec2 delta = player_delta + normalize(facing) * origin_offset;
+	// Offset the cone apex to the sprite's rear edge, opposite facing.
+	vec2 delta = player_delta + normalize(facing) * rear_edge_offset;
 	float player_dist = length(player_delta);
 	float dist = length(delta);
 	vec2 cone_dir = dist > 0.0001 ? delta / dist : normalize(facing);
@@ -50,9 +49,12 @@ void fragment() {
 		acos(clamp(dot(cone_dir, normalize(facing)), -1.0, 1.0))
 	);
 	float cone = radial * angular;
-	// Clear the sprite body footprint independently from the directional cone.
-	float body_clear = 1.0 - smoothstep(body_clear_radius - softness, body_clear_radius, player_dist);
-	float visible = max(cone, body_clear);
+	// Inner Radius remains centered on the player. Only the directional cone
+	// starts at the rear edge, avoiding a second circular area behind the sprite.
+	float inner_clear = inner_radius > 0.0 && player_dist <= inner_radius ? 1.0 : 0.0;
+	// The rear edge itself is the cone's origin. Do not add a second clear
+	// region behind the character; that duplicates the field of view there.
+	float visible = max(cone, inner_clear);
 
 	COLOR = vec4(mist_color.rgb, mist_color.a * (1.0 - visible));
 }

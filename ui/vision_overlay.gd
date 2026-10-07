@@ -24,15 +24,13 @@ var mist_color: Color = Color(0.10, 0.11, 0.16, 0.75)
 ## Width in pixels of the soft transition at the cone's arc and edges.
 var edge_softness: float = 10.0
 
-## Always-clear radius (in tiles) around the apex, so the character standing on
-## the cone's point is fully shown. 0 gives a strict cone.
-var inner_radius_tiles: float = 1.0
+## Radius in tiles that remains clear around the player independently of facing.
+@export_range(0.0, 8.0, 0.1) var inner_radius_tiles: float = 1.0
 
 var _material: ShaderMaterial = null
 @export_range(0.1, 30.0, 0.1) var turn_speed: float = 8.0
 var _display_facing: Vector2 = Vector2.RIGHT
 var _has_display_facing: bool = false
-
 
 func _ready() -> void:
 	# A Control parented to a CanvasLayer does not get an anchor rect from the
@@ -85,7 +83,11 @@ func update_cone(vision: C_Vision, source_tile: Vector2, delta: float = 0.016) -
 	_material.set_shader_parameter("facing", _display_facing)
 	_material.set_shader_parameter("half_angle", deg_to_rad(vision.cone_angle_degrees) * 0.5)
 	_material.set_shader_parameter("softness", edge_softness)
-	_material.set_shader_parameter("inner_radius", maxf(inner_radius_tiles, 1.0) * tile_size * maxf(zoom.x, 0.0001))
-	_material.set_shader_parameter("origin_offset", tile_size * 0.0 * maxf(zoom.x, 0.0001))
-	_material.set_shader_parameter("body_clear_radius", tile_size * 2.5 * maxf(zoom.x, 0.0001))
+	_material.set_shader_parameter("inner_radius", inner_radius_tiles * tile_size * maxf(zoom.x, 0.0001))
+	# Cone begins at the rear of the 16x16 character sprite. Calculate the
+	# support distance of its square bounds opposite the facing direction.
+	var rear_edge_offset: float = tile_size * 0.5 * (
+		absf(_display_facing.x) + absf(_display_facing.y)
+	) * maxf(zoom.x, 0.0001)
+	_material.set_shader_parameter("rear_edge_offset", rear_edge_offset)
 	_material.set_shader_parameter("mist_color", mist_color)

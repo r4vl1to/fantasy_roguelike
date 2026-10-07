@@ -35,6 +35,7 @@ func _ready() -> void:
 
 	mapping = GaeaMappingRegistry.new()
 	mapping.build_from_graph(gaea_generator.graph)
+	world_manager.variant_source_override = renderer.shared_tile_set.get_source(0) as TileSetAtlasSource
 	_build_material_lookup()
 	database = WorldDatabase.new()
 	_clear_test_persistence()
@@ -132,7 +133,7 @@ func _build_render_materials() -> Dictionary:
 
 
 func _build_material_lookup() -> void:
-	for terrain_id: int in [TerrainId.DIRT, TerrainId.GRASS, TerrainId.SAND, TerrainId.STONE, TerrainId.WATER]:
+	for terrain_id: int in [TerrainId.DIRT, TerrainId.GRASS, TerrainId.SAND, TerrainId.STONE, TerrainId.WATER, TerrainId.MUSHROOM]:
 		var material: GaeaMaterial = gaea_generator.graph.get(_parameter_name(terrain_id)) as GaeaMaterial
 		_assert(material != null, "Graph material exists for TerrainId %d" % terrain_id)
 		_materials_by_id[terrain_id] = material
@@ -145,6 +146,7 @@ func _parameter_name(terrain_id: int) -> StringName:
 		TerrainId.SAND: return &"sand"
 		TerrainId.STONE: return &"stone"
 		TerrainId.WATER: return &"water"
+		TerrainId.MUSHROOM: return &"mushroom"
 	return &""
 
 
